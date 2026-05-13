@@ -117,7 +117,6 @@ TEMPLATES = [
                 "oscar.apps.checkout.context_processors.checkout",
                 "oscar.apps.communication.notifications.context_processors.notifications",
                 "oscar.core.context_processors.metadata",
-                "shop.context_processors.cart_summary",
             ],
         },
     },
@@ -199,3 +198,9 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     "compressor.finders.CompressorFinder",
 )
+
+OSCAR_CURRENCY_FORMAT = {
+    "BRL": {
+        "format": "¤\xa0#,##0.00",
+    }
+}
