@@ -1,0 +1,42 @@
+{% load i18n %}
+
+<nav aria-label="Checkout steps"
+    class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <ol class="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-5">
+        <li
+            class="rounded-lg px-3 py-2 {% if step == 1 %}bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200{% elif step > 1 %}bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200{% else %}bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+            {% if step > 1 %}
+            <a href="{% url 'checkout:shipping-address' %}" class="font-medium hover:underline">{% trans "1. Shipping
+                address" %}</a>
+            {% else %}
+            <span class="font-medium">{% trans "1. Shipping address" %}</span>
+            {% endif %}
+        </li>
+        <li
+            class="rounded-lg px-3 py-2 {% if step == 2 %}bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200{% elif step > 2 %}bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200{% else %}bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+            {% if step > 2 %}
+            <a href="{% url 'checkout:shipping-method' %}" class="font-medium hover:underline">{% trans "2. Shipping
+                method" %}</a>
+            {% else %}
+            <span class="font-medium">{% trans "2. Shipping method" %}</span>
+            {% endif %}
+        </li>
+        <li
+            class="rounded-lg px-3 py-2 {% if step == 3 %}bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200{% elif step > 3 %}bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200{% else %}bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+            {% if step > 3 %}
+            <a href="{% url 'checkout:payment-details' %}" class="font-medium hover:underline">{% trans "3. Payment"
+                %}</a>
+            {% else %}
+            <span class="font-medium">{% trans "3. Payment" %}</span>
+            {% endif %}
+        </li>
+        <li
+            class="rounded-lg px-3 py-2 {% if step == 4 %}bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200{% elif step > 4 %}bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200{% else %}bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+            <span class="font-medium">{% trans "4. Preview" %}</span>
+        </li>
+        <li
+            class="rounded-lg px-3 py-2 {% if step == 5 %}bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200{% else %}bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400{% endif %}">
+            <span class="font-medium">{% trans "5. Confirmation" %}</span>
+        </li>
+    </ol>
+</nav>

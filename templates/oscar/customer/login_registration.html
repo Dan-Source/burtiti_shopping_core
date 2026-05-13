@@ -1,0 +1,52 @@
+{% extends "oscar/layout.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Login or register" %} | {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="Breadcrumb" class="mb-5">
+    <ol class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <li><a href="{{ homepage_url }}" class="hover:text-primary-700 hover:underline dark:hover:text-primary-400">{%
+                trans "Home" %}</a></li>
+        <li>/</li>
+        <li class="font-medium text-gray-700 dark:text-gray-200">{% trans "Login or register" %}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+<div class="grid gap-6 lg:grid-cols-2">
+    <form id="login_form" action="{{ request.get_full_path }}" method="post"
+        class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{% trans "Log In" %}</h2>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{% trans "Access your account to continue checkout and
+            track your orders." %}</p>
+        <div class="mt-5 space-y-4">
+            {% csrf_token %}
+            {% include "oscar/partials/form_fields.html" with form=login_form %}
+        </div>
+        <p class="mt-4 text-sm"><a href="{% url 'password-reset' %}"
+                class="font-medium text-primary-700 hover:underline dark:text-primary-400">{% trans "I have forgotten my
+                password" %}</a></p>
+        <button name="login_submit" type="submit" value="Log In"
+            class="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-900">{%
+            trans "Log In" %}</button>
+    </form>
+
+    <form id="register_form" action="{{ request.get_full_path }}" method="post"
+        class="rounded-2xl border border-gray-200 bg-gray-50 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800/60">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{% trans "Register" %}</h2>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{% trans "Create an account for faster checkout and
+            order history access." %}</p>
+        <div class="mt-5 space-y-4">
+            {% csrf_token %}
+            {% include "oscar/partials/form_fields.html" with form=registration_form %}
+        </div>
+        <button name="registration_submit" type="submit" value="Register"
+            class="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-primary-200 bg-white px-5 py-2.5 text-sm font-medium text-primary-700 hover:bg-primary-50 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:border-primary-800 dark:bg-gray-900 dark:text-primary-300 dark:hover:bg-gray-800 dark:focus:ring-primary-900">{%
+            trans "Register" %}</button>
+    </form>
+</div>
+{% endblock content %}

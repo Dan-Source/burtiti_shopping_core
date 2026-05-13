@@ -1,0 +1,36 @@
+{% extends "oscar/layout_2_col.html" %}
+{% load i18n %}
+
+{% block title %}
+{{ page_title }} | {% trans "Account" %} | {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="Breadcrumb" class="mb-5">
+    <ol class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <li><a href="{{ homepage_url }}" class="hover:text-primary-700 hover:underline dark:hover:text-primary-400">{%
+                trans "Home" %}</a></li>
+        <li>/</li>
+        <li><a href="{% url 'customer:summary' %}"
+                class="hover:text-primary-700 hover:underline dark:hover:text-primary-400">{% trans "Account" %}</a>
+        </li>
+        {% block extra_breadcrumbs %}{% endblock %}
+        <li>/</li>
+        <li class="font-medium text-gray-700 dark:text-gray-200">{{ page_title }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block headertext %}{{ page_title }}{% endblock %}
+
+{% block column_left %}
+<ul class="space-y-1">
+    {% block standard_tabs %}
+    {% include "oscar/customer/partials/standard_tabs.html" %}
+    {% endblock %}
+</ul>
+{% endblock %}
+
+{% block content %}
+{% block tabcontent %}{% endblock tabcontent %}
+{% endblock content %}
