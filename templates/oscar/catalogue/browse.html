@@ -1,0 +1,208 @@
+{% extends "oscar/layout.html" %}
+
+{% load display_tags %}
+{% load product_tags %}
+{% load i18n %}
+
+{% block title %}
+{% if summary %}{{ summary }} |{% endif %} {{ block.super }}
+{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+        <li class="inline-flex items-center">
+            <a href="{{ homepage_url }}"
+                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600 dark:text-gray-400 dark:hover:text-white">
+                <svg class="me-2.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                    viewBox="0 0 20 20">
+                    <path
+                        d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
+                </svg>
+                {% trans "Home" %}
+            </a>
+        </li>
+        <li aria-current="page">
+            <div class="flex items-center">
+                <svg class="h-5 w-5 text-gray-400 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="m9 5 7 7-7 7" />
+                </svg>
+                <a href="{% url 'catalogue:index' %}"
+                    class="ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 dark:text-gray-400 dark:hover:text-white md:ms-2">{%
+                    trans "Products" %}</a>
+            </div>
+        </li>
+        {% if summary %}
+        <li aria-current="page">
+            <div class="flex items-center">
+                <svg class="h-5 w-5 text-gray-400 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="m9 5 7 7-7 7" />
+                </svg>
+                <span class="ms-1 text-sm font-medium text-gray-500 dark:text-gray-400 md:ms-2">{{ summary }}</span>
+            </div>
+        </li>
+        {% endif %}
+    </ol>
+</nav>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<section class="bg-gray-50 py-8 antialiased dark:bg-gray-900 md:py-12">
+    <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
+        <div class="mb-4 items-end justify-between space-y-4 sm:flex sm:space-y-0 md:mb-8">
+            <div>
+                <h2 class="mt-3 text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+                    {{ summary|default:"Products" }}
+                </h2>
+                {% if paginator.count %}
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {% if paginator.num_pages > 1 %}
+                    <strong>{{ paginator.count }}</strong> results - showing <strong>{{ page_obj.start_index }}</strong>
+                    to <strong>{{ page_obj.end_index }}</strong>.
+                    {% else %}
+                    <strong>{{ paginator.count }}</strong> result{{ paginator.count|pluralize }}.
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                {% if has_facets %}
+                <button data-modal-toggle="filterModal" data-modal-target="filterModal" type="button"
+                    class="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
+                    <svg class="-ms-0.5 me-2 h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                            d="M18.796 4H5.204a1 1 0 0 0-.753 1.659l5.302 6.058a1 1 0 0 1 .247.659v4.874a.5.5 0 0 0 .2.4l3 2.25a.5.5 0 0 0 .8-.4v-7.124a1 1 0 0 1 .247-.659l5.302-6.059c.566-.646.106-1.658-.753-1.658Z" />
+                    </svg>
+                    {% trans "Filters" %}
+                    <svg class="-me-0.5 ms-2 h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+                {% endif %}
+
+                {% if form and form.sort_by.field.choices %}
+                <button id="sortDropdownButton1" data-dropdown-toggle="dropdownSort1" type="button"
+                    class="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700 sm:w-auto">
+                    <svg class="-ms-0.5 me-2 h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 4v16M7 4l3 3M7 4 4 7m9-3h6l-6 6h6m-6.5 10 3.5-7 3.5 7M14 18h4" />
+                    </svg>
+                    {% trans "Sort" %}
+                    <svg class="-me-0.5 ms-2 h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="dropdownSort1"
+                    class="z-50 hidden w-56 divide-y divide-gray-100 rounded-lg bg-white shadow dark:bg-gray-700">
+                    <ul class="p-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
+                        aria-labelledby="sortDropdownButton1">
+                        {% for value, label in form.sort_by.field.choices %}
+                        <li>
+                            <a href="?{% get_parameters 'sort_by' %}sort_by={{ value }}"
+                                class="group inline-flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white">
+                                {{ label }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if products %}
+        <div class="mb-4 grid gap-4 sm:grid-cols-2 md:mb-8 lg:grid-cols-3 xl:grid-cols-4">
+            {% block products %}
+            {% for product in products %}
+            <div>
+                {% render_product product.object %}
+            </div>
+            {% endfor %}
+            {% endblock %}
+        </div>
+
+        {% if page_obj.has_next %}
+        <div class="w-full text-center">
+            <a href="?{% get_parameters 'page' %}page={{ page_obj.next_page_number }}"
+                class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700">{%
+                trans "Show more" %}</a>
+        </div>
+        {% endif %}
+        {% else %}
+        <p
+            class="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+            {% trans "No products found." %}</p>
+        {% endif %}
+    </div>
+
+    {% if has_facets %}
+    <div id="filterModal" tabindex="-1" aria-hidden="true"
+        class="fixed left-0 right-0 top-0 z-50 hidden h-modal w-full overflow-y-auto overflow-x-hidden p-4 md:inset-0 md:h-full">
+        <div class="relative h-full w-full max-w-5xl md:h-auto">
+            <div class="relative rounded-lg bg-white shadow dark:bg-gray-800">
+                <div
+                    class="flex items-start justify-between rounded-t border-b border-gray-200 p-4 dark:border-gray-700 md:p-5">
+                    <h3 class="text-lg font-normal text-gray-500 dark:text-gray-400">{% trans "Filters" %}</h3>
+                    <button type="button"
+                        class="ml-auto inline-flex items-center rounded-lg bg-transparent p-1.5 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
+                        data-modal-toggle="filterModal">
+                        <svg class="h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18 17.94 6M18 18 6.06 6" />
+                        </svg>
+                        <span class="sr-only">{% trans "Close modal" %}</span>
+                    </button>
+                </div>
+                <div class="space-y-6 px-4 py-5 md:px-5">
+                    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {% for field, data in facet_data.items %}
+                        {% if data.results %}
+                        <section class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                            <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-white">{{
+                                data.name }}</h4>
+                            <div class="mt-3 space-y-2">
+                                {% for item in data.results %}
+                                <a href="{{ item.select_url|default:item.deselect_url }}"
+                                    class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm {% if item.selected %}bg-gray-100 font-semibold text-gray-900 dark:bg-gray-700 dark:text-white{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white{% endif %}">
+                                    <span>{{ item.name }}</span>
+                                    {% if item.show_count %}<span class="text-xs text-gray-400">{{ item.count
+                                        }}</span>{% endif %}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </section>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <div
+                    class="flex items-center space-x-4 rounded-b border-t border-gray-200 p-4 dark:border-gray-700 md:p-5">
+                    <button type="button" data-modal-toggle="filterModal"
+                        class="rounded-lg bg-primary-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-800">{%
+                        trans "Done" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock content %}
+
+{% block onbodyload %}
+{{ block.super }}
+oscar.search.init();
+{% endblock %}
