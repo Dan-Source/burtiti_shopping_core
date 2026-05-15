@@ -9,4 +9,5 @@ dependencies = [
     "django-oscar[sorl-thumbnail]>=4.1",
     "factory-boy>=3.3.0",
     "ipython>=9.13.0",
+    "whoosh>=2.7.4",
 ]

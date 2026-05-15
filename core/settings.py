@@ -171,6 +171,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -184,7 +188,8 @@ AUTHENTICATION_BACKENDS = (
 
 HAYSTACK_CONNECTIONS = {
     "default": {
-        "ENGINE": "haystack.backends.simple_backend.SimpleEngine",
+        "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
+        "PATH": BASE_DIR / "whoosh_index",
     },
 }
 
@@ -204,3 +209,6 @@ OSCAR_CURRENCY_FORMAT = {
         "format": "¤\xa0#,##0.00",
     }
 }
+
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

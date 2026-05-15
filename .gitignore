@@ -32,3 +32,13 @@ htmlcov/
 
 # Dependencies
 *.lock
+
+# Media files
+media/
+staticfiles/
+
+# DB
+db.sqlite3
+
+# Woosh index
+whoosh_index/
