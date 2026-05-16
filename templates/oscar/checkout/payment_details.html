@@ -1,10 +1,12 @@
 {% extends "oscar/checkout/checkout.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Payment details" %} | {{ block.super }}{% endblock %}
+{% block title %}
+    {% trans "Payment details" %} | {{ block.super }}
+{% endblock %}
 
 {% block checkout_nav %}
-{% include "oscar/checkout/nav.html" with step=3 %}
+    {% include 'oscar/checkout/nav.html' with step=3 %}
 {% endblock %}
 
 {% block checkout_title %}{% trans "Enter payment details" %}{% endblock %}
@@ -15,28 +17,14 @@
 {% block payment_method %}{% endblock %}
 
 {% block payment_details %}
-{% block payment_details_content %}
-<div class="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800/60">
-    <p class="text-sm text-gray-600 dark:text-gray-300">
-        {% trans "Payment integration is project-specific. You can connect one of Oscar's gateway libraries and continue
-        to preview." %}
-    </p>
-
-    <ul class="mt-4 list-inside list-disc space-y-2 text-sm text-gray-700 dark:text-gray-200">
-        <li><a href="https://github.com/django-oscar/django-oscar-paypal"
-                class="font-medium text-primary-700 hover:underline dark:text-primary-400">django-oscar-paypal</a></li>
-        <li><a href="https://github.com/django-oscar/django-oscar-adyen"
-                class="font-medium text-primary-700 hover:underline dark:text-primary-400">django-oscar-adyen</a></li>
-        <li><a href="https://github.com/django-oscar/django-oscar-docdata"
-                class="font-medium text-primary-700 hover:underline dark:text-primary-400">django-oscar-docdata</a></li>
-        <li><a href="https://github.com/django-oscar/django-oscar-accounts"
-                class="font-medium text-primary-700 hover:underline dark:text-primary-400">django-oscar-accounts</a>
-        </li>
-    </ul>
-
-    <a id="view_preview" href="{% url 'checkout:preview' %}"
-        class="mt-5 inline-flex items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-900">{%
-        trans "Continue" %}</a>
-</div>
-{% endblock payment_details_content %}
+    {% block payment_details_content %}
+        <p>{% trans "This page needs implementing within your project.  You may want to use one of Oscar's payment gateway libraries:" %}</p>
+        <ul>
+            <li><a href="https://github.com/django-oscar/django-oscar-paypal">django-oscar-paypal</a></li>
+            <li><a href="https://github.com/django-oscar/django-oscar-adyen">django-oscar-adyen</a></li>
+            <li><a href="https://github.com/django-oscar/django-oscar-docdata">django-oscar-docdata</a></li>
+            <li><a href="https://github.com/django-oscar/django-oscar-accounts">django-oscar-accounts</a></li>
+        </ul>
+        <a id="view_preview" href="{% url 'checkout:preview' %}" class="btn btn-primary btn-lg">{% trans "Continue" %}</a>
+    {% endblock payment_details_content %}
 {% endblock payment_details %}

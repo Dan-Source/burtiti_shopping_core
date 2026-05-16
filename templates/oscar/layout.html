@@ -1,31 +1,68 @@
-{% extends "flowbite_base.html" %}
-{% load i18n %}
+{% extends "oscar/base.html" %}
+{% load static %}
 
-{% block title %}BuritiShopping{% endblock %}
+{% block styles %}
+    <link rel="stylesheet" type="text/css" href="{% static "oscar/css/styles.css" %}" />
+{% endblock %}
 
-{% block page_content %}
 {% block layout %}
-{% block content_wrapper %}
-<section class="bg-white py-8 antialiased dark:bg-gray-900 md:py-12">
-    <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
-        {% block breadcrumbs %}{% endblock %}
+    {# Top-horizontal bar with account, notifictions, dashboard links #}
+    {% include "oscar/partials/nav_accounts.html" %}
 
-        {% block header %}
-        <div class="mb-6 border-b border-gray-200 pb-4 dark:border-gray-800">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-                {% block headertext %}{% trans "Store" %}{% endblock %}
-            </h1>
+    {# Site logo/title, mini-basket, browse dropdown and searchbox #}
+    <header class="header container">
+        <div class="page_inner">
+            <div class="row justify-content-between">
+                {% include "oscar/partials/brand.html" %}
+                {# Mini-basket wrapped in a block so some templates can now display it #}
+                {% block mini_basket %}{% include "oscar/partials/mini_basket.html" %}{% endblock %}
+            </div>
         </div>
+        {% block navigation %}
+            {% include "oscar/partials/nav_primary.html" %}
         {% endblock %}
+    </header>
 
-        {% block subnavigation %}{% endblock %}
+    {# Main content of page - other layout templates may override this block #}
+    {% block content_wrapper %}
+        <div class="container page">
+            <div class="page_inner">
+                {% block breadcrumbs %}{% endblock %}
+                {% block header %}
+                    <div class="page-header">
+                        <h1>{% block headertext %}{% endblock %}</h1>
+                    </div>
+                {% endblock %}
+                {% include "oscar/partials/alert_messages.html" %}
+                {% block subnavigation %}{% endblock %}
+                <div class="content">
+                    {% block subheader %}{% endblock subheader %}
 
-        <div class="space-y-6">
-            {% block subheader %}{% endblock subheader %}
-            <div id="content_inner">{% block content %}{% endblock %}</div>
+                    {# Div exists for AJAX updates to entire content section #}
+                    <div id="content_inner">{% block content %}{% endblock %}</div>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
+    {% endblock %}
+
+    {% include "oscar/partials/footer.html" %}
 {% endblock %}
+
+{# Local scripts #}
+{% block scripts %}
+    {{ block.super }}
+    <!-- Twitter Bootstrap -->
+    <script src="{% static "oscar/js/bootstrap4/bootstrap.bundle.min.js" %}"></script>
+    <!-- Oscar -->
+    <script src="{% static "oscar/js/oscar/ui.js" %}"></script>
 {% endblock %}
+
+{% block extrascripts %}
+    {% include "oscar/partials/extrascripts.html" %}
+    {{ block.super }}
+{% endblock %}
+
+{% block onbodyload %}
+    {{ block.super }}
+    oscar.init();
 {% endblock %}
