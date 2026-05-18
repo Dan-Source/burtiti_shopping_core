@@ -1,6 +1,5 @@
 {% load i18n %}
 {% load static %}
-{% load compress %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:"en-gb" }}" class="{% block html_class %}no-js{% endblock %}">
     <head>
@@ -16,12 +15,7 @@
         {% endblock %}
 
         {# Block where global CSS will go. #}
-        {% block styles %}
-            {% compress css %}
-                <link rel="stylesheet" href="{% static 'oscar/css/styles.css' %}" />
-                <link rel="stylesheet" type="text/x-scss" href="{% static 'src/bootstrap_theme.scss' %}" />
-            {% endcompress %}
-        {% endblock %}
+        {% block styles %}{% endblock %}
 
         {# Additional CSS - specific to certain pages #}
         {% block extrastyles %}{% endblock %}
@@ -58,7 +52,7 @@
                 {% block onbodyload %}{% endblock %}
             });
         </script>
-
+         {# Page meta-data - this is populated by the 'metadata' template context processor #}
         {# Page meta-data - this is populated by the 'metadata' template context processor #}
     </body>
 </html>

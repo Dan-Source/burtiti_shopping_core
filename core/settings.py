@@ -193,10 +193,12 @@ HAYSTACK_CONNECTIONS = {
     },
 }
 
-# Tailwind CSS configuration
+# Frontend asset compression and SCSS preprocessing
 COMPRESS_ROOT = BASE_DIR / "static"
-
 COMPRESS_ENABLED = True
+COMPRESS_PRECOMPILERS = (
+    ("text/x-scss", "django_libsass.SassCompiler"),
+)
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
