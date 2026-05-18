@@ -143,7 +143,7 @@
         {% endblock vouchers %}
 
         {% block baskettotals %}
-            <div class="col-sm-6">
+            <div class="col-sm-6 basket-summary-panel">
                 <div class="sub-header">
                     <h2>{% trans "Totals" %}</h2>
                 </div>
@@ -154,7 +154,7 @@
 
 
     {% block formactions %}
-        <div class="form-group clearfix">
+        <div class="form-group clearfix basket-checkout-action">
             <div class="row">
                 <div class="col-sm-4 offset-sm-8">
                     <a href="{% url 'checkout:index' %}" class="btn btn-lg btn-primary btn-block">{% trans "Proceed to checkout" %}</a>

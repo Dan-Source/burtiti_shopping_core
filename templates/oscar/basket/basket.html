@@ -23,7 +23,9 @@
 
 {% block content %}
     {# Use a partial template so that AJAX can be used to re-render basket #}
-    {% include 'oscar/basket/partials/basket_content.html' %}
+    <section class="basket-shell">
+        {% include 'oscar/basket/partials/basket_content.html' %}
+    </section>
 {% endblock content %}
 
 {% block onbodyload %}

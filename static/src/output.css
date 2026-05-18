@@ -2224,6 +2224,9 @@
   .border-light {
     border-color: var(--color-light);
   }
+  .border-muted {
+    border-color: var(--color-muted);
+  }
   .border-red-200 {
     border-color: var(--color-red-200);
   }
@@ -2323,6 +2326,9 @@
   }
   .bg-light {
     background-color: var(--color-light);
+  }
+  .bg-muted {
+    background-color: var(--color-muted);
   }
   .bg-neutral-primary {
     background-color: var(--color-neutral-primary);

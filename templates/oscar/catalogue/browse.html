@@ -22,6 +22,7 @@
 
 {% block column_left %}
     {% category_tree as tree_categories %}
+    <div class="catalogue-sidebar">
     {% if tree_categories %}
         <h4>{% trans "Show results for" %}</h4>
         <div class="side_categories card card-body bg-light">
@@ -54,11 +55,12 @@
             {% endfor %}
         </div>
     {% endif %}
+    </div>
 {% endblock %}
 
 {% block content %}
 
-    <form method="get">
+    <form method="get" class="catalogue-browse-form">
         {# Render other search params as hidden inputs #}
         {% for value in selected_facets %}
             <input type="hidden" name="selected_facets" value="{{ value }}" />
@@ -66,24 +68,26 @@
         <input type="hidden" name="q" value="{{ search_form.q.value|default_if_none:"" }}" />
 
         {% if paginator.count %}
+            <div class="catalogue-results-head">
             {% if paginator.num_pages > 1 %}
                 {% blocktrans with start=page_obj.start_index end=page_obj.end_index count num_results=paginator.count %}
-                    <strong>{{ num_results }}</strong> result - showing <strong>{{ start }}</strong> to <strong>{{ end }}</strong>.
+                    <span class="storefront-meta"><strong>{{ num_results }}</strong> result - showing <strong>{{ start }}</strong> to <strong>{{ end }}</strong>.</span>
                 {% plural %}
-                    <strong>{{ num_results }}</strong> results - showing <strong>{{ start }}</strong> to <strong>{{ end }}</strong>.
+                    <span class="storefront-meta"><strong>{{ num_results }}</strong> results - showing <strong>{{ start }}</strong> to <strong>{{ end }}</strong>.</span>
                 {% endblocktrans %}
             {% else %}
                 {% blocktrans count num_results=paginator.count %}
-                    <strong>{{ num_results }}</strong> result.
+                    <span class="storefront-meta"><strong>{{ num_results }}</strong> result.</span>
                 {% plural %}
-                    <strong>{{ num_results }}</strong> results.
+                    <span class="storefront-meta"><strong>{{ num_results }}</strong> results.</span>
                 {% endblocktrans %}
             {% endif %}
             {% if form %}
-                <div class="float-right">
+                <div class="float-right storefront-sort">
                     {% include "oscar/partials/form_field.html" with field=form.sort_by style='horizontal' %}
                 </div>
             {% endif %}
+            </div>
         {% else %}
             <p>
                 {% trans "<strong>0</strong> results." %}
@@ -91,9 +95,9 @@
         {% endif %}
     </form>
     {% if products %}
-        <section>
+        <section class="catalogue-results">
             <div>
-                <ol class="row list-unstyled ml-0 pl-0">
+                <ol class="row list-unstyled ml-0 pl-0 catalogue-grid">
                     {% block products %}
                       {% for product in products %}
                           <li class="col-sm-6 col-md-4 col-lg-3">{% render_product product.object %}</li>

@@ -20,6 +20,7 @@
         </div>
     {% endif %}
 
+    <section class="checkout-shell">
     <div class="row shipping-payment">
         {% block shipping_address %}
             <div class="col-sm-6">
@@ -27,7 +28,7 @@
                     <h2>{% trans "Shipping" %}</h2>
                 </div>
                 {% if shipping_address %}
-                    <div class="card card-body bg-light">
+                    <div class="card card-body bg-light storefront-panel">
                         <h3>
                           {% trans "Address" %}
                           {% block shipping_address_actions %}
@@ -59,7 +60,7 @@
                 {% endif %}
 
                 {% if shipping_method %}
-                    <div class="card card-body bg-light card card-body bg-light-info">
+                    <div class="card card-body bg-light bg-light-info storefront-panel">
                         <h3>
                           {% trans "Shipping method" %}
                           {% block shipping_method_actions %}
@@ -85,7 +86,7 @@
                 <div class="sub-header">
                     <h2>{% trans "Payment" %}</h2>
                 </div>
-                <div class="card card-body bg-light card card-body bg-light-success">
+                <div class="card card-body bg-light bg-light-success storefront-panel">
                     <h3>
                       {% trans "Payment" %}
                       <a href="{% url 'checkout:payment-details' %}" class="float-right">
@@ -99,7 +100,7 @@
     </div>
 
     {% block order_contents %}
-        <div class="sub-header">
+        <div class="sub-header product-page-section">
             {% block order_contents_actions %}
                 <a href="{% url 'basket:summary' %}" class="float-right">
                     {% trans "Edit order contents" %}
@@ -152,7 +153,7 @@
         <div class="row">
             <div class="col-sm-6">&nbsp;</div>
             <div class="col-sm-6">
-                <div class="sub-header">
+                <div class="sub-header product-page-section">
                     <h2>{% trans 'Totals' %}</h2>
                 </div>
                 {% include 'oscar/basket/partials/basket_totals.html' %}
@@ -169,5 +170,7 @@
 
     {% block place_order %}
     {% endblock place_order %}
+
+    </section>
 
 {% endblock content %}

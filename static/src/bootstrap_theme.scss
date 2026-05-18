@@ -1,72 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Fraunces:wght@600;700&display=swap');
-
 // Bootstrap 4.1 theming order: functions -> overrides -> variables/mixins -> map merges -> components.
 @import "../vendor/bootstrap/scss/functions";
 
-$brand-cream: #f8f4ec;
-$brand-sand: #e3d8c7;
-$brand-brown: #4a3525;
-$brand-ink: #1f2a37;
-$brand-teal: #1f7a8c;
-$brand-gold: #d39f4a;
-$brand-rose: #ab5f52;
+$brand-primary: #2c7da0;
+$brand-secondary: #ffb703;
+$brand-bg: #ffffff;
+$brand-text-dark: #212529;
+$brand-text-light: #6c757d;
 
 $white: #ffffff;
-$gray-100: #f7f6f3;
-$gray-200: #ece9e2;
-$gray-300: #d8d0c4;
-$gray-400: #b4a999;
-$gray-500: #8f806d;
-$gray-600: #6f624f;
-$gray-700: #4f4435;
-$gray-800: #372f25;
-$gray-900: #221d16;
-$black: #140f0a;
+$gray-100: #f8fafc;
+$gray-200: #e9eef2;
+$gray-300: #d7e0e7;
+$gray-400: #a4b4c1;
+$gray-500: #7f93a2;
+$gray-600: #6c757d;
+$gray-700: #4a5560;
+$gray-800: #2f3943;
+$gray-900: #212529;
+$black: #15191d;
 
-$blue: #1f7a8c;
-$indigo: #3d5a80;
-$purple: #6e4e9b;
-$pink: #ab5f52;
-$red: #9f3a2e;
-$orange: #cb7a3d;
-$yellow: #d39f4a;
-$green: #3f8f5a;
-$teal: #1f7a8c;
-$cyan: #4c8ea5;
+$blue: $brand-primary;
+$indigo: #4f7ea5;
+$purple: #617ca7;
+$pink: #db7f65;
+$red: #d64545;
+$orange: #f28d2f;
+$yellow: #ffca3a;
+$green: #2f9e6f;
+$teal: #2c7da0;
+$cyan: #4ca6c7;
 
-$primary: $brand-ink;
-$secondary: $brand-sand;
+$primary: $brand-primary;
+$secondary: $brand-secondary;
 $success: $green;
-$info: $teal;
-$warning: $yellow;
+$info: #4ca6c7;
+$warning: #ffca3a;
 $danger: $red;
-$light: $brand-cream;
-$dark: $brand-brown;
+$light: #f8fafc;
+$dark: $brand-text-dark;
 
-$font-family-sans-serif: "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+$font-family-sans-serif: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 $font-family-base: $font-family-sans-serif;
-$headings-font-family: "Fraunces", Georgia, serif;
+$headings-font-family: "Montserrat", "Segoe UI", sans-serif;
 $headings-font-weight: 700;
-$headings-line-height: 1.2;
+$headings-line-height: 1.25;
 $line-height-base: 1.6;
 
-$body-bg: $brand-cream;
-$body-color: $gray-800;
-$link-color: $brand-teal;
-$link-hover-color: darken($brand-teal, 10%);
-$border-radius: 0.5rem;
-$border-radius-lg: 0.75rem;
-$border-radius-sm: 0.35rem;
-$btn-border-radius: 0.5rem;
+$body-bg: $brand-bg;
+$body-color: $brand-text-dark;
+$link-color: $brand-primary;
+$link-hover-color: darken($brand-primary, 10%);
+$border-radius: 0.55rem;
+$border-radius-lg: 0.8rem;
+$border-radius-sm: 0.4rem;
+$btn-border-radius: 0.55rem;
 $btn-border-radius-lg: 0.7rem;
-$btn-border-radius-sm: 0.35rem;
-$input-border-radius: 0.5rem;
-$card-border-radius: 0.85rem;
-$modal-content-border-radius: 0.85rem;
+$btn-border-radius-sm: 0.4rem;
+$input-border-radius: 0.55rem;
+$card-border-radius: 0.9rem;
+$modal-content-border-radius: 0.9rem;
 $enable-shadows: true;
-$box-shadow-sm: 0 0.2rem 0.6rem rgba(31, 42, 55, 0.08);
-$box-shadow: 0 0.5rem 1.5rem rgba(31, 42, 55, 0.12);
-$box-shadow-lg: 0 1rem 2.5rem rgba(31, 42, 55, 0.18);
+$box-shadow-sm: 0 0.2rem 0.75rem rgba(23, 34, 45, 0.08);
+$box-shadow: 0 0.65rem 1.85rem rgba(23, 34, 45, 0.12);
+$box-shadow-lg: 0 1.25rem 2.8rem rgba(23, 34, 45, 0.18);
 
 $spacer: 1rem;
 $spacers: (
@@ -95,27 +91,27 @@ $container-max-widths: (
   xl: 1260px
 );
 
-$navbar-light-color: rgba($brand-ink, 0.8);
-$navbar-light-hover-color: $brand-ink;
-$navbar-light-active-color: $brand-ink;
-$navbar-light-toggler-border-color: rgba($brand-ink, 0.25);
-$navbar-dark-color: rgba($white, 0.85);
+$navbar-light-color: rgba($brand-text-dark, 0.82);
+$navbar-light-hover-color: $brand-text-dark;
+$navbar-light-active-color: $brand-text-dark;
+$navbar-light-toggler-border-color: rgba($brand-text-dark, 0.22);
+$navbar-dark-color: rgba($white, 0.88);
 $navbar-dark-hover-color: $white;
 $navbar-dark-active-color: $white;
-$navbar-dark-toggler-border-color: rgba($white, 0.25);
+$navbar-dark-toggler-border-color: rgba($white, 0.3);
 
-$card-border-color: rgba($brand-brown, 0.08);
-$card-cap-bg: rgba($brand-sand, 0.4);
-$dropdown-border-color: rgba($brand-brown, 0.1);
-$dropdown-link-hover-bg: rgba($brand-sand, 0.4);
-$table-border-color: rgba($brand-brown, 0.12);
-$input-border-color: rgba($brand-brown, 0.28);
-$input-focus-border-color: rgba($brand-teal, 0.65);
-$input-btn-focus-box-shadow: 0 0 0 0.2rem rgba($brand-teal, 0.22);
-$custom-control-indicator-checked-bg: $brand-teal;
+$card-border-color: rgba($brand-primary, 0.14);
+$card-cap-bg: rgba($brand-primary, 0.05);
+$dropdown-border-color: rgba($brand-primary, 0.12);
+$dropdown-link-hover-bg: rgba($brand-primary, 0.08);
+$table-border-color: rgba($brand-primary, 0.12);
+$input-border-color: rgba($brand-text-dark, 0.18);
+$input-focus-border-color: rgba($brand-primary, 0.65);
+$input-btn-focus-box-shadow: 0 0 0 0.2rem rgba($brand-primary, 0.22);
+$custom-control-indicator-checked-bg: $brand-primary;
 $custom-checkbox-indicator-border-radius: 0.3rem;
-$breadcrumb-bg: rgba($brand-sand, 0.35);
-$jumbotron-bg: linear-gradient(135deg, #efe6d9 0%, #efe4cf 40%, #e8d6bb 100%);
+$breadcrumb-bg: rgba($brand-primary, 0.08);
+$jumbotron-bg: linear-gradient(135deg, #ffffff 0%, #f7fbfe 55%, #f4f9fc 100%);
 
 @import "../vendor/bootstrap/scss/variables";
 @import "../vendor/bootstrap/scss/mixins";
@@ -123,17 +119,18 @@ $jumbotron-bg: linear-gradient(135deg, #efe6d9 0%, #efe4cf 40%, #e8d6bb 100%);
 $theme-colors: map-merge(
   $theme-colors,
   (
-    "accent": $brand-gold,
-    "earth": $brand-brown,
-    "rose": $brand-rose
+    "accent": $brand-secondary,
+    "ink": $brand-text-dark,
+    "muted": $brand-text-light
   )
 );
 
 $utilities-colors: map-merge(
   $theme-colors,
   (
-    "ink": $brand-ink,
-    "sand": $brand-sand
+    "brand": $brand-primary,
+    "cta": $brand-secondary,
+    "muted": $brand-text-light
   )
 );
 
@@ -171,9 +168,76 @@ $utilities-colors: map-merge(
 @import "../vendor/bootstrap/scss/print";
 
 body {
-  background-image: radial-gradient(circle at 20% 20%, rgba(211, 159, 74, 0.14), rgba(248, 244, 236, 0) 28%),
-    radial-gradient(circle at 80% 0%, rgba(31, 122, 140, 0.1), rgba(248, 244, 236, 0) 32%);
+  background-color: $brand-bg;
+  background-image: radial-gradient(circle at 15% 0%, rgba($brand-primary, 0.12), rgba($brand-bg, 0) 28%),
+    radial-gradient(circle at 90% 10%, rgba($brand-secondary, 0.15), rgba($brand-bg, 0) 26%);
   min-height: 100vh;
+}
+
+::selection {
+  background: rgba($brand-primary, 0.2);
+}
+
+a {
+  transition: color 0.2s ease;
+}
+
+.btn {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.2s ease;
+}
+
+.btn:hover,
+.btn:focus {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  box-shadow: 0 0.5rem 1.2rem rgba($brand-primary, 0.28);
+}
+
+.btn-secondary,
+.btn-warning {
+  color: $brand-text-dark;
+  box-shadow: 0 0.45rem 1rem rgba($brand-secondary, 0.32);
+}
+
+.btn-outline-secondary {
+  border-color: rgba($brand-primary, 0.45);
+  color: $brand-primary;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+  background: rgba($brand-primary, 0.08);
+  color: darken($brand-primary, 8%);
+}
+
+.card {
+  border: 1px solid rgba($brand-primary, 0.13);
+}
+
+.form-control,
+.form-control:focus,
+.custom-select,
+.custom-select:focus {
+  box-shadow: none;
+}
+
+.form-control:focus,
+.custom-select:focus {
+  border-color: rgba($brand-primary, 0.62);
+  box-shadow: 0 0 0 0.2rem rgba($brand-primary, 0.14);
+}
+
+.text-muted {
+  color: $brand-text-light !important;
+}
+
+.breadcrumb {
+  border-radius: $border-radius;
+  border: 1px solid rgba($brand-primary, 0.1);
 }
 
 .navbar,
@@ -181,4 +245,149 @@ body {
 .modal-content,
 .dropdown-menu {
   box-shadow: $box-shadow-sm;
+}
+
+.navbar {
+  border-bottom: 1px solid rgba($brand-primary, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+.sub-header {
+  margin-bottom: 1rem;
+}
+
+.sub-header h1,
+.sub-header h2,
+.sub-header h3,
+.sub-header h4 {
+  margin-bottom: 0;
+}
+
+.storefront-panel {
+  background: $white;
+  border: 1px solid rgba($brand-primary, 0.13);
+  border-radius: $card-border-radius;
+  box-shadow: $box-shadow-sm;
+}
+
+.storefront-panel-title {
+  color: $brand-text-dark;
+  font-weight: 700;
+}
+
+.storefront-meta {
+  color: $brand-text-light;
+  font-size: 0.95rem;
+}
+
+.catalogue-sidebar .side_categories {
+  border-radius: $card-border-radius;
+  border: 1px solid rgba($brand-primary, 0.14);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fcfe 100%);
+}
+
+.catalogue-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba($brand-primary, 0.14);
+  border-radius: $border-radius;
+  background: $white;
+}
+
+.catalogue-grid > li {
+  margin-bottom: 1.5rem;
+}
+
+.product_pod {
+  height: 100%;
+  border-radius: $card-border-radius;
+  border: 1px solid rgba($brand-primary, 0.15);
+  background: $white;
+  box-shadow: 0 0.45rem 1.25rem rgba($brand-primary, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product_pod:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.9rem 1.8rem rgba($brand-primary, 0.16);
+}
+
+.product_page .product_main {
+  padding: 1rem;
+  border: 1px solid rgba($brand-primary, 0.14);
+  border-radius: $card-border-radius;
+  background: $white;
+}
+
+.product_page .add-to-basket .btn-primary,
+.product_page .add-to-basket .btn-secondary {
+  min-height: 2.65rem;
+}
+
+.product-page-section {
+  margin-top: 1.6rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid rgba($brand-primary, 0.12);
+  border-radius: $card-border-radius;
+  background: $white;
+}
+
+.basket-shell .basket-items {
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  border-radius: $border-radius;
+  border: 1px solid rgba($brand-primary, 0.12);
+  background: $white;
+}
+
+.basket-shell .basket-title {
+  margin-bottom: 0.75rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba($brand-primary, 0.14);
+  border-radius: $border-radius;
+  background: rgba($brand-primary, 0.06);
+}
+
+.basket-shell .price_color {
+  font-weight: 700;
+}
+
+.basket-checkout-action .btn {
+  box-shadow: 0 0.65rem 1.5rem rgba($brand-secondary, 0.28);
+}
+
+.checkout-shell .shipping-payment > [class*="col-"] {
+  margin-bottom: 1rem;
+}
+
+.checkout-shell .card {
+  border: 1px solid rgba($brand-primary, 0.14);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fcfe 100%);
+}
+
+.checkout-shell .basket-items {
+  margin-bottom: 0.65rem;
+  padding: 0.8rem;
+  border: 1px solid rgba($brand-primary, 0.11);
+  border-radius: $border-radius;
+  background: $white;
+}
+
+@media (max-width: 767.98px) {
+  .catalogue-results-head {
+    padding: 0.75rem;
+  }
+
+  .product_page .product_main {
+    margin-top: 1rem;
+  }
+
+  .product-page-section {
+    padding: 1rem;
+  }
 }
