@@ -4,13 +4,11 @@
 
 {% block layout %}
 
-    <header class="header container">
-        <div class="page_inner">
-            <div class="row">
-                {% include "oscar/partials/brand.html" %}
-            </div><!-- /row -->
+    <header>
+        {% include "oscar/partials/nav_primary.html" %}
+        <div class="header container">
+            {% comment %} {% block checkout_nav %}{% endblock %} {% endcomment %}
         </div>
-        {% block checkout_nav %}{% endblock %}
     </header><!-- /header -->
 
     <div class="container page">
@@ -18,7 +16,7 @@
             {% include 'oscar/partials/alert_messages.html' %}
 
             <div class="sub-header">
-                <h1>{% block checkout_title %}{% endblock %}</h1>
+                {% comment %} <h1>{% block checkout_title %}{% endblock %}</h1> {% endcomment %}
             </div>
 
             <!-- The main nav on checkout pages contain links to modal flatpages -->

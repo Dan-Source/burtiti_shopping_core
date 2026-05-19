@@ -1,0 +1,14 @@
+{% load i18n %}
+
+<a class="navbar-brand storefront-brand mr-lg-4" href="{{ homepage_url }}">
+    {% firstof shop_name "Store" %}
+</a>
+
+<ul class="navbar-nav storefront-menu">
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'catalogue:index' %}">{% trans "Lojas" %}</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="/sobre-nos/">{% trans "Sobre nós" %}</a>
+    </li>
+</ul>

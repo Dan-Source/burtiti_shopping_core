@@ -1,0 +1,7 @@
+{% load i18n %}
+
+<a class="storefront-cart btn btn-outline-dark" href="{% url 'basket:summary' %}">
+    <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+    <span class="sr-only">{% trans "Basket" %}</span>
+    <span class="badge badge-light storefront-cart-badge">{{ request.basket.num_items|default:request.basket.num_lines|default:0 }}</span>
+</a>

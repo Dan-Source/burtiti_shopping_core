@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<form class="storefront-search-form mb-2 mb-lg-0" method="GET" action="{% url 'search:search' %}">
+    <div class="input-group">
+        <input
+            class="form-control storefront-search-input"
+            name="q"
+            id="id_q"
+            placeholder="{% trans 'Search products' %}"
+            aria-label="{% trans 'Search products' %}"
+        >
+        <div class="input-group-append">
+            <button class="btn btn-dark" type="submit">{% trans "Search" %}</button>
+        </div>
+    </div>
+</form>
