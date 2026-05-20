@@ -22,10 +22,10 @@
 
 {% block breadcrumbs %}
     <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ homepage_url }}">{% trans "Home" %}</a></li>
+        <ol class="breadcrumb bg-transparent">
+            <li class="breadcrumb-item"><a class="text-black" href="{{ homepage_url }}" style="color: #000 !important;">{% trans "Home" %}</a></li>
             {% for category in category.get_ancestors %}
-                <li class="breadcrumb-item"><a href="{{ category.get_absolute_url }}">{{ category.name }}</a></li>
+                <li class="breadcrumb-item"><a class="text-black" href="{{ category.get_absolute_url }}" style="color: #000 !important;">{{ category.name }}</a></li>
             {% endfor %}
             <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
         </ol>

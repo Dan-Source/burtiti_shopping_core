@@ -3,6 +3,7 @@
 
 {% block styles %}
     <link rel="stylesheet" type="text/css" href="{% static "oscar/css/styles.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static "static/css/index.css" %}" />
 {% endblock %}
 
 {% block layout %}
@@ -12,15 +13,10 @@
     {# Site logo/title, mini-basket, browse dropdown and searchbox #}
     <header class="header container">
         <div class="page_inner">
-            <div class="row justify-content-between">
-                {% comment %} {% include "oscar/partials/brand.html" %} {% endcomment %}
-                {# Mini-basket wrapped in a block so some templates can now display it #}
-                {% comment %} {% block mini_basket %}{% include "oscar/partials/mini_basket.html" %}{% endblock %} {% endcomment %}
-            </div>
+            {% block navigation %}
+                {% include "oscar/partials/nav_primary.html" %}
+            {% endblock %}
         </div>
-        {% block navigation %}
-            {% include "oscar/partials/nav_primary.html" %}
-        {% endblock %}
     </header>
 
     {# Main content of page - other layout templates may override this block #}
