@@ -1,393 +1,94 @@
-// Bootstrap 4.1 theming order: functions -> overrides -> variables/mixins -> map merges -> components.
-@import "../vendor/bootstrap/scss/functions";
-
-$brand-primary: #2c7da0;
-$brand-secondary: #ffb703;
+// Buriti base theme tokens
+$brand-primary: #d37643;
+$brand-primary-dark: #363738;
+$brand-secondary: #f5f5f5;
+$brand-surface-alt: #fefaf1;
 $brand-bg: #ffffff;
-$brand-text-dark: #212529;
-$brand-text-light: #6c757d;
+$brand-text: #d37643;
+$brand-success: #47b486;
+$brand-danger: #db4444;
+$brand-hover-warning: #e2b93b;
+$brand-hover-danger: #eb5757;
 
-$white: #ffffff;
-$gray-100: #f8fafc;
-$gray-200: #e9eef2;
-$gray-300: #d7e0e7;
-$gray-400: #a4b4c1;
-$gray-500: #7f93a2;
-$gray-600: #6c757d;
-$gray-700: #4a5560;
-$gray-800: #2f3943;
-$gray-900: #212529;
-$black: #15191d;
-
-$blue: $brand-primary;
-$indigo: #4f7ea5;
-$purple: #617ca7;
-$pink: #db7f65;
-$red: #d64545;
-$orange: #f28d2f;
-$yellow: #ffca3a;
-$green: #2f9e6f;
-$teal: #2c7da0;
-$cyan: #4ca6c7;
-
-$primary: $brand-primary;
-$secondary: $brand-secondary;
-$success: $green;
-$info: #4ca6c7;
-$warning: #ffca3a;
-$danger: $red;
-$light: #f8fafc;
-$dark: $brand-text-dark;
-
-$font-family-sans-serif: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-$font-family-base: $font-family-sans-serif;
-$headings-font-family: "Montserrat", "Segoe UI", sans-serif;
-$headings-font-weight: 700;
-$headings-line-height: 1.25;
-$line-height-base: 1.6;
-
-$body-bg: $brand-bg;
-$body-color: $brand-text-dark;
-$link-color: $brand-primary;
-$link-hover-color: darken($brand-primary, 10%);
-$border-radius: 0.55rem;
-$border-radius-lg: 0.8rem;
-$border-radius-sm: 0.4rem;
-$btn-border-radius: 0.55rem;
-$btn-border-radius-lg: 0.7rem;
-$btn-border-radius-sm: 0.4rem;
-$input-border-radius: 0.55rem;
-$card-border-radius: 0.9rem;
-$modal-content-border-radius: 0.9rem;
-$enable-shadows: true;
-$box-shadow-sm: 0 0.2rem 0.75rem rgba(23, 34, 45, 0.08);
-$box-shadow: 0 0.65rem 1.85rem rgba(23, 34, 45, 0.12);
-$box-shadow-lg: 0 1.25rem 2.8rem rgba(23, 34, 45, 0.18);
-
-$spacer: 1rem;
-$spacers: (
-  0: 0,
-  1: ($spacer * 0.25),
-  2: ($spacer * 0.5),
-  3: $spacer,
-  4: ($spacer * 1.5),
-  5: ($spacer * 2.5),
-  6: ($spacer * 4),
-  7: ($spacer * 6)
-);
-
-$grid-breakpoints: (
-  xs: 0,
-  sm: 540px,
-  md: 768px,
-  lg: 1024px,
-  xl: 1360px
-);
-
-$container-max-widths: (
-  sm: 520px,
-  md: 740px,
-  lg: 980px,
-  xl: 1260px
-);
-
-$navbar-light-color: rgba($brand-text-dark, 0.82);
-$navbar-light-hover-color: $brand-text-dark;
-$navbar-light-active-color: $brand-text-dark;
-$navbar-light-toggler-border-color: rgba($brand-text-dark, 0.22);
-$navbar-dark-color: rgba($white, 0.88);
-$navbar-dark-hover-color: $white;
-$navbar-dark-active-color: $white;
-$navbar-dark-toggler-border-color: rgba($white, 0.3);
-
-$card-border-color: rgba($brand-primary, 0.14);
-$card-cap-bg: rgba($brand-primary, 0.05);
-$dropdown-border-color: rgba($brand-primary, 0.12);
-$dropdown-link-hover-bg: rgba($brand-primary, 0.08);
-$table-border-color: rgba($brand-primary, 0.12);
-$input-border-color: rgba($brand-text-dark, 0.18);
-$input-focus-border-color: rgba($brand-primary, 0.65);
-$input-btn-focus-box-shadow: 0 0 0 0.2rem rgba($brand-primary, 0.22);
-$custom-control-indicator-checked-bg: $brand-primary;
-$custom-checkbox-indicator-border-radius: 0.3rem;
-$breadcrumb-bg: rgba($brand-primary, 0.08);
-$jumbotron-bg: linear-gradient(135deg, #ffffff 0%, #f7fbfe 55%, #f4f9fc 100%);
-
-@import "../vendor/bootstrap/scss/variables";
-@import "../vendor/bootstrap/scss/mixins";
-
-$theme-colors: map-merge(
-  $theme-colors,
-  (
-    "accent": $brand-secondary,
-    "ink": $brand-text-dark,
-    "muted": $brand-text-light
-  )
-);
-
-$utilities-colors: map-merge(
-  $theme-colors,
-  (
-    "brand": $brand-primary,
-    "cta": $brand-secondary,
-    "muted": $brand-text-light
-  )
-);
-
-@import "../vendor/bootstrap/scss/root";
-@import "../vendor/bootstrap/scss/reboot";
-@import "../vendor/bootstrap/scss/type";
-@import "../vendor/bootstrap/scss/images";
-@import "../vendor/bootstrap/scss/code";
-@import "../vendor/bootstrap/scss/grid";
-@import "../vendor/bootstrap/scss/tables";
-@import "../vendor/bootstrap/scss/forms";
-@import "../vendor/bootstrap/scss/buttons";
-@import "../vendor/bootstrap/scss/transitions";
-@import "../vendor/bootstrap/scss/dropdown";
-@import "../vendor/bootstrap/scss/button-group";
-@import "../vendor/bootstrap/scss/input-group";
-@import "../vendor/bootstrap/scss/custom-forms";
-@import "../vendor/bootstrap/scss/nav";
-@import "../vendor/bootstrap/scss/navbar";
-@import "../vendor/bootstrap/scss/card";
-@import "../vendor/bootstrap/scss/breadcrumb";
-@import "../vendor/bootstrap/scss/pagination";
-@import "../vendor/bootstrap/scss/badge";
-@import "../vendor/bootstrap/scss/jumbotron";
-@import "../vendor/bootstrap/scss/alert";
-@import "../vendor/bootstrap/scss/progress";
-@import "../vendor/bootstrap/scss/media";
-@import "../vendor/bootstrap/scss/list-group";
-@import "../vendor/bootstrap/scss/close";
-@import "../vendor/bootstrap/scss/modal";
-@import "../vendor/bootstrap/scss/tooltip";
-@import "../vendor/bootstrap/scss/popover";
-@import "../vendor/bootstrap/scss/carousel";
-@import "../vendor/bootstrap/scss/utilities";
-@import "../vendor/bootstrap/scss/print";
+:root {
+	--brand-primary: #{$brand-primary};
+	--brand-primary-dark: #{$brand-primary-dark};
+	--brand-secondary: #{$brand-secondary};
+	--brand-surface-alt: #{$brand-surface-alt};
+	--brand-bg: #{$brand-bg};
+	--brand-text: #{$brand-text};
+	--brand-success: #{$brand-success};
+	--brand-danger: #{$brand-danger};
+	--brand-hover-warning: #{$brand-hover-warning};
+	--brand-hover-danger: #{$brand-hover-danger};
+}
 
 body {
-  background-color: $brand-bg;
-  background-image: radial-gradient(circle at 15% 0%, rgba($brand-primary, 0.12), rgba($brand-bg, 0) 28%),
-    radial-gradient(circle at 90% 10%, rgba($brand-secondary, 0.15), rgba($brand-bg, 0) 26%);
-  min-height: 100vh;
+	background-color: $brand-bg;
+	color: $brand-primary-dark;
 }
 
-::selection {
-  background: rgba($brand-primary, 0.2);
+a,
+.text-primary {
+	color: $brand-text !important;
 }
 
-a {
-  transition: color 0.2s ease;
+a:hover,
+a:focus {
+	color: $brand-primary-dark !important;
 }
 
-.btn {
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.2s ease;
+.btn-primary,
+.badge-primary,
+.bg-primary,
+.card-header {
+	background-color: $brand-primary !important;
+	border-color: $brand-primary !important;
+	color: #fff !important;
 }
 
-.btn:hover,
-.btn:focus {
-  transform: translateY(-1px);
-}
-
-.btn-primary {
-  box-shadow: 0 0.5rem 1.2rem rgba($brand-primary, 0.28);
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+	background-color: $brand-hover-warning !important;
+	border-color: $brand-hover-warning !important;
+	color: #fff !important;
 }
 
 .btn-secondary,
-.btn-warning {
-  color: $brand-text-dark;
-  box-shadow: 0 0.45rem 1rem rgba($brand-secondary, 0.32);
+.badge-secondary,
+.bg-secondary {
+	background-color: $brand-secondary !important;
+	border-color: $brand-secondary !important;
+	color: $brand-primary-dark !important;
 }
 
-.btn-outline-secondary {
-  border-color: rgba($brand-primary, 0.45);
-  color: $brand-primary;
+.btn-success,
+.badge-success,
+.bg-success {
+	background-color: $brand-success !important;
+	border-color: $brand-success !important;
+	color: #fff !important;
 }
 
-.btn-outline-secondary:hover,
-.btn-outline-secondary:focus {
-  background: rgba($brand-primary, 0.08);
-  color: darken($brand-primary, 8%);
+.btn-danger,
+.badge-danger,
+.bg-danger,
+.alert-danger {
+	background-color: $brand-danger !important;
+	border-color: $brand-danger !important;
+	color: #fff !important;
 }
 
-.card {
-  border: 1px solid rgba($brand-primary, 0.13);
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active {
+	background-color: $brand-hover-danger !important;
+	border-color: $brand-hover-danger !important;
 }
 
-.form-control,
-.form-control:focus,
-.custom-select,
-.custom-select:focus {
-  box-shadow: none;
-}
-
-.form-control:focus,
-.custom-select:focus {
-  border-color: rgba($brand-primary, 0.62);
-  box-shadow: 0 0 0 0.2rem rgba($brand-primary, 0.14);
-}
-
-.text-muted {
-  color: $brand-text-light !important;
-}
-
-.breadcrumb {
-  border-radius: $border-radius;
-  border: 1px solid rgba($brand-primary, 0.1);
-}
-
-.navbar,
 .card,
-.modal-content,
-.dropdown-menu {
-  box-shadow: $box-shadow-sm;
-}
-
-.navbar {
-  border-bottom: 1px solid rgba($brand-primary, 0.12);
-  backdrop-filter: blur(4px);
-}
-
-.sub-header {
-  margin-bottom: 1rem;
-}
-
-.sub-header h1,
-.sub-header h2,
-.sub-header h3,
-.sub-header h4 {
-  margin-bottom: 0;
-}
-
-.storefront-panel {
-  background: $white;
-  border: 1px solid rgba($brand-primary, 0.13);
-  border-radius: $card-border-radius;
-  box-shadow: $box-shadow-sm;
-}
-
-.storefront-panel-title {
-  color: $brand-text-dark;
-  font-weight: 700;
-}
-
-.storefront-meta {
-  color: $brand-text-light;
-  font-size: 0.95rem;
-}
-
-.catalogue-sidebar .side_categories {
-  border-radius: $card-border-radius;
-  border: 1px solid rgba($brand-primary, 0.14);
-  background: linear-gradient(180deg, #ffffff 0%, #f9fcfe 100%);
-}
-
-.catalogue-results-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba($brand-primary, 0.14);
-  border-radius: $border-radius;
-  background: $white;
-}
-
-.catalogue-grid > li {
-  margin-bottom: 1.5rem;
-}
-
-.product_pod {
-  height: 100%;
-  border-radius: $card-border-radius;
-  border: 1px solid rgba($brand-primary, 0.15);
-  background: $white;
-  box-shadow: 0 0.45rem 1.25rem rgba($brand-primary, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.product_pod:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0.9rem 1.8rem rgba($brand-primary, 0.16);
-}
-
-.product_page .product_main {
-  padding: 1rem;
-  border: 1px solid rgba($brand-primary, 0.14);
-  border-radius: $card-border-radius;
-  background: $white;
-}
-
-.product_page .add-to-basket .btn-primary,
-.product_page .add-to-basket .btn-secondary {
-  min-height: 2.65rem;
-}
-
-.product-page-section {
-  margin-top: 1.6rem;
-  padding: 1.1rem 1.2rem;
-  border: 1px solid rgba($brand-primary, 0.12);
-  border-radius: $card-border-radius;
-  background: $white;
-}
-
-.basket-shell .basket-items {
-  margin-bottom: 0.75rem;
-  padding: 1rem;
-  border-radius: $border-radius;
-  border: 1px solid rgba($brand-primary, 0.12);
-  background: $white;
-}
-
-.basket-shell .basket-title {
-  margin-bottom: 0.75rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid rgba($brand-primary, 0.14);
-  border-radius: $border-radius;
-  background: rgba($brand-primary, 0.06);
-}
-
-.basket-shell .price_color {
-  font-weight: 700;
-}
-
-.basket-checkout-action .btn {
-  box-shadow: 0 0.65rem 1.5rem rgba($brand-secondary, 0.28);
-}
-
-.checkout-shell .shipping-payment > [class*="col-"] {
-  margin-bottom: 1rem;
-}
-
-.checkout-shell .card {
-  border: 1px solid rgba($brand-primary, 0.14);
-  background: linear-gradient(180deg, #ffffff 0%, #f9fcfe 100%);
-}
-
-.checkout-shell .basket-items {
-  margin-bottom: 0.65rem;
-  padding: 0.8rem;
-  border: 1px solid rgba($brand-primary, 0.11);
-  border-radius: $border-radius;
-  background: $white;
-}
-
-@media (max-width: 767.98px) {
-  .catalogue-results-head {
-    padding: 0.75rem;
-  }
-
-  .product_page .product_main {
-    margin-top: 1rem;
-  }
-
-  .product-page-section {
-    padding: 1rem;
-  }
+.well,
+.thumbnail {
+	background-color: $brand-surface-alt;
 }
