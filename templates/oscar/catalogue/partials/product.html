@@ -4,45 +4,50 @@
 {% load reviews_tags %}
 
 {% block product %}
-    <article class="product_pod">
+    <article class="product_pod card h-100 border-0">
         {% block product_image %}
-            <div class="image_container w-100">
+            <div class="image_container product-card-image w-100">
                 {% with image=product.primary_image %}
                     {% oscar_thumbnail image.original "x155" upscale=False as thumb %}
                     <a href="{{ product.get_absolute_url }}">
-                        <img src="{{ thumb.url }}" alt="{{ product.get_title }}" class="img-thumbnail w-auto mx-auto my-0">
+                        <img src="{{ thumb.url }}" alt="{{ product.get_title }}" class="card-img-top">
                     </a>
                 {% endwith %}
             </div>
         {% endblock %}
 
-        {% block product_review %}
-            {% iffeature "reviews" %}
-                <p class="star-rating {{ product.rating|as_stars }}">
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                </p>
-            {% endiffeature %}
-        {% endblock %}
+        <div class="card-body px-0 pb-0 product-card-content">
+            {% block product_title %}
+                <h3 class="mt-3 mb-2">
+                    <a href="{{ product.get_absolute_url }}" title="{{ product.get_title }}">
+                        {{ product.get_title|truncatewords:4 }}
+                    </a>
+                </h3>
+            {% endblock %}
 
-        {% block product_title %}
-            <h3 class="mt-3">
-                <a href="{{ product.get_absolute_url }}" title="{{ product.get_title }}">
-                    {{ product.get_title|truncatewords:4 }}
-                </a>
-            </h3>
-        {% endblock %}
+            {% block product_price %}
+                <div class="product_price w-100">
+                    {% include "oscar/catalogue/partials/stock_record.html" %}
+                </div>
+            {% endblock %}
 
-        {% block product_price %}
-            <div class="product_price w-100">
-                {% include "oscar/catalogue/partials/stock_record.html" %}
-                {% if not product.is_parent and not product.has_options %}
-                    {% include "oscar/catalogue/partials/add_to_basket_form_compact.html" %}
-                {% endif %}
-            </div>
-        {% endblock %}
+            {% block product_review %}
+                {% iffeature "reviews" %}
+                    <p class="star-rating {{ product.rating|as_stars }}">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </p>
+                {% endiffeature %}
+            {% endblock %}
+
+            {% if not product.is_parent and not product.has_options %}
+                {% include "oscar/catalogue/partials/add_to_basket_form_compact.html" %}
+            {% endif %}
+            {% block quickview %}{% endblock %}
+
+        </div>
     </article>
 {% endblock %}

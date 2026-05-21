@@ -24,7 +24,7 @@
 
 {% if not basket.is_empty %}
     {% block basket_form_headers %}
-        <div class="basket-title d-none d-md-block">
+        <div class="basket-title basket-main-header d-none d-md-block">
             <div class="row">
                 <h4 class="col-md-6">{% trans "Items to buy now" %}</h4>
                 <h4 class="col-md-3">{% trans "Quantity" %}</h4>
@@ -44,7 +44,7 @@
                     {% purchase_info_for_line request line as session %}
                     <div class="basket-items">
                         <div class="row">
-                            <div class="col-md-2">
+                            <div class="col-md-2 basket-qty-col">
                                 {{ form.id }}
                                 {% with image=product.primary_image %}
                                     {% oscar_thumbnail image.original "100x100" upscale=False as thumb %}
@@ -59,36 +59,36 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="checkout-quantity">
-                                    <div class="input-group {% if form.errors %}error{% endif %}">
-                                        {% render_field form.quantity class+="form-control" %}
-                                    <div class="input-group-append">
-                                        <button class="btn btn-secondary" type="submit" data-loading-text="{% trans 'Updating...' %}">{% trans "Update" %}</button>
-                                    </div>
+                                    <div class="basket-quantity-actions {% if form.errors %}error{% endif %}">
+                                        {% render_field form.quantity class+="form-control basket-qty-input" %}
+                                        <button class="btn btn-secondary basket-update-btn" type="submit" data-loading-text="{% trans 'Updating...' %}" aria-label="{% trans 'Update' %}" title="{% trans 'Update' %}">
+                                            <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                                        </button>
+                                        <a href="#" class="btn btn-secondary basket-remove-icon-btn" data-id="{{ forloop.counter0 }}" data-behaviours="remove" aria-label="{% trans 'Remove' %}" title="{% trans 'Remove' %}">
+                                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                        </a>
                                     </div>
                                 </div>
-                                    <div class="basket-line-actions">
-                                        <a href="#" data-id="{{ forloop.counter0 }}" data-behaviours="remove">{% trans "Remove" %}</a>
-                                        {% if user.is_authenticated %}
-                                            | <a href="#" data-id="{{ forloop.counter0 }}" data-behaviours="save">{% trans "Save for later" %}</a>
-                                        {% endif %}
-                                        <div style="display:none">
-                                            {{ form.save_for_later }}
-                                            {{ form.DELETE }}
-                                        </div>
-                                        {% for field_errors in form.errors.values %}
-                                            {% for error in field_errors %}
-                                                <span class="error-block"><i class="fas fa-exclamation"></i> {{ error }}</span>
-                                            {% endfor %}
-
-                                        {% endfor %}
+                                <div class="basket-line-actions">
+                                    {% if user.is_authenticated %}
+                                        <a href="#" data-id="{{ forloop.counter0 }}" data-behaviours="save">{% trans "Save for later" %}</a>
+                                    {% endif %}
+                                    <div style="display:none">
+                                        {{ form.save_for_later }}
+                                        {{ form.DELETE }}
                                     </div>
-
+                                    {% for field_errors in form.errors.values %}
+                                        {% for error in field_errors %}
+                                            <span class="error-block"><i class="fas fa-exclamation"></i> {{ error }}</span>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </div>
                             </div>
                             <div class="col-md-1">
                                 {% if not line.unit_price_incl_tax and not line.unit_tax_excl_tax %}
                                     <p class="text-right">&mdash;</p>
                                 {% else %}
-                                    <p class="price_color text-right">
+                                    <p class="price_color basket-unit-price text-right">
                                         <span class="price-title d-md-none">{% trans "Price" %}:</span>
                                         {% if line.is_tax_known %}
                                             {{ line.unit_price_incl_tax|currency:line.price_currency }}
@@ -103,7 +103,7 @@
                                 {% if not line.line_price_incl_tax and not line_price_excl_tax %}
                                     <p class="text-right">&mdash;</p>
                                 {% else %}
-                                    <p class="price_color text-right">
+                                    <p class="price_color basket-line-total text-right">
                                         <span class="price-title d-md-none">{% trans "Total" %}:</span>
                                         {% if line.is_tax_known %}
                                             {{ line.line_price_incl_tax|currency:line.price_currency }}
@@ -144,6 +144,10 @@
 
         {% block baskettotals %}
             <div class="col-sm-6 basket-summary-panel">
+                <a href="{{ homepage_url }}" class="btn btn-outline-secondary basket-back-shopping mb-3">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    <span>{% trans "Back to shopping" %}</span>
+                </a>
                 <div class="sub-header">
                     <h2>{% trans "Totals" %}</h2>
                 </div>
@@ -202,7 +206,10 @@
                             <div class="col-md-6">
                                 <h3><a href="{{ form.instance.product.get_absolute_url }}">{{ form.instance.description }}</a></h3>
                                 <p class="availability {{ session.availability.code }}">{{ session.availability.message }}</p>
-                                <a href="#" data-id="{{ forloop.counter0 }}" data-behaviours="remove">{% trans "Remove" %}</a>
+                                <a href="#" class="basket-action-remove" data-id="{{ forloop.counter0 }}" data-behaviours="remove">
+                                    <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                    <span>{% trans "Remove" %}</span>
+                                </a>
                                 <div style="display:none">
                                     {{ form.move_to_basket }}
                                     {{ form.DELETE }}
