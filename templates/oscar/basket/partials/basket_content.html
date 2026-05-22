@@ -121,21 +121,27 @@
     {% endblock %}
 
     <div class="row">
+            <a href="{{ homepage_url }}" class="btn btn-secondary basket-back-shopping mb-3">
+                <span>{% trans "Back to shopping" %}</span>
+            </a>
+    </div>
+
+    <div class="row">
         {% block vouchers %}
             {# Hide the entire section if a custom BasketView doesn't pass in a voucher form #}
             {% if voucher_form %}
-                <div class="col-sm-6">
-                    <div class="sub-header">
-                        <h2>{% trans "Voucher/promo code" %}</h2>
-                    </div>
-                    <p id="voucher_form_link"><a href="#voucher" class="btn btn-secondary btn-full">{% trans "I have a voucher code..." %}</a></p>
+                <div class="col-sm-6 basket-voucher-panel">
+                    <p id="voucher_form_link" class="basket-voucher-link mb-0"><a href="#voucher" class="btn btn-outline-secondary btn-block basket-voucher-toggle">{% trans "I have a voucher code..." %}</a></p>
 
-                    <div id="voucher_form_container" style="display:none">
-                        <form id="voucher_form" action="{% url 'basket:vouchers-add' %}" method="post">
+                    <div id="voucher_form_container" class="basket-voucher-form-container" style="display:none">
+                        <form id="voucher_form" class="basket-voucher-form" action="{% url 'basket:vouchers-add' %}" method="post">
                             {% csrf_token %}
                             {% include "oscar/partials/form_fields.html" with form=voucher_form %}
-                            <button type="submit" class="btn btn-info" data-loading-text="{% trans 'Adding...' %}">{% trans "Add voucher" %}</button>
-                            {% trans "or" %} <a href="#" id="voucher_form_cancel">{% trans "cancel" %}</a>
+                            <div class="basket-voucher-actions">
+                                <button type="submit" class="btn btn-primary basket-voucher-submit" data-loading-text="{% trans 'Adding...' %}">{% trans "Add voucher" %}</button>
+                                <span class="basket-voucher-separator">{% trans "or" %}</span>
+                                <a href="#" id="voucher_form_cancel" class="basket-voucher-cancel">{% trans "cancel" %}</a>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -144,28 +150,21 @@
 
         {% block baskettotals %}
             <div class="col-sm-6 basket-summary-panel">
-                <a href="{{ homepage_url }}" class="btn btn-outline-secondary basket-back-shopping mb-3">
-                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                    <span>{% trans "Back to shopping" %}</span>
-                </a>
-                <div class="sub-header">
-                    <h2>{% trans "Totals" %}</h2>
-                </div>
                 {% include 'oscar/basket/partials/basket_totals.html' with editable=1 %}
+
+                {% block formactions %}
+                    <div class="form-group clearfix basket-checkout-action">
+                        <div class="row justify-content-center">
+                            <div class="col-sm-4 basket-checkout-col">
+                                <a href="{% url 'checkout:index' %}" class="btn btn-lg btn-primary basket-checkout-btn mt-3">{% trans "Proceed to checkout" %}</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endblock formactions %}
             </div>
         {% endblock baskettotals %}
     </div>
 
-
-    {% block formactions %}
-        <div class="form-group clearfix basket-checkout-action">
-            <div class="row">
-                <div class="col-sm-4 offset-sm-8">
-                    <a href="{% url 'checkout:index' %}" class="btn btn-lg btn-primary btn-block">{% trans "Proceed to checkout" %}</a>
-                </div>
-            </div>
-        </div>
-    {% endblock formactions %}
 
 {% else %}
     {% block emptybasket %}
