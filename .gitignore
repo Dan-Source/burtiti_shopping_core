@@ -42,3 +42,6 @@ db.sqlite3
 
 # Woosh index
 whoosh_index/
+
+# Cache
+static/CACHE/
