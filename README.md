@@ -59,6 +59,18 @@ Run tests:
 uv run python manage.py test
 ```
 
+Gerar dados reutilizaveis para testar criacao de produtos e checkout:
+
+```bash
+uv run python scripts/seed_checkout_data.py --users 3 --password 'Teste@123'
+```
+
+O script cria:
+- pais de entrega BR habilitado
+- parceiro demo
+- tipos de produto, categorias e produtos com estoque
+- usuarios de teste com endereco padrao para shipping e billing
+
 Run a specific app test module:
 
 ```bash
