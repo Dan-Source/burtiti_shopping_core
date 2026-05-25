@@ -1,9 +1,8 @@
 [project]
-name = "buriti-shopping-core"
+name = "buriti_shopping_core"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.14"
+
+[tool.uv]
 dependencies = [
     "django-compressor>=4.6.0",
     "django-libsass>=0.9",
@@ -12,4 +11,9 @@ dependencies = [
     "ipython>=9.13.0",
     "libsass>=0.23.0",
     "whoosh>=2.7.4",
+    "psycopg2-binary>=2.9.6",
+    "celery>=5.3.0",
+    "redis>=4.6.0",
+    "django-celery-beat>=2.3.0",
+    "gunicorn>=21.2.0",
 ]
