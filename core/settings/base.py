@@ -3,13 +3,14 @@ Django base settings for core project.
 This file contains settings common to all environments.
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 from oscar.defaults import *
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# base.py lives in core/settings/, so parent.parent.parent is the project root.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -176,10 +177,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
@@ -200,7 +202,9 @@ HAYSTACK_CONNECTIONS = {
 }
 
 # Frontend asset compression and SCSS preprocessing
-COMPRESS_ROOT = BASE_DIR / "static"
+# Keep compressor output in STATIC_ROOT so /static/CACHE files are actually served.
+COMPRESS_ROOT = STATIC_ROOT
+COMPRESS_URL = STATIC_URL
 COMPRESS_ENABLED = True
 COMPRESS_PRECOMPILERS = (
     ("text/x-scss", "django_libsass.SassCompiler"),

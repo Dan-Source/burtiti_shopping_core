@@ -1,8 +1,7 @@
 [project]
 name = "buriti_shopping_core"
 version = "0.1.0"
-
-[tool.uv]
+requires-python = ">=3.11"
 dependencies = [
     "django-compressor>=4.6.0",
     "django-libsass>=0.9",
@@ -17,3 +16,4 @@ dependencies = [
     "django-celery-beat>=2.3.0",
     "gunicorn>=21.2.0",
 ]
+

@@ -22,7 +22,7 @@ services:
 
   web:
     build: .
-    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:8000"
+    command: sh -c "uv run python manage.py migrate --noinput && uv run python manage.py collectstatic --noinput && uv run python manage.py compress --force && uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - .:/app
     ports:
@@ -43,7 +43,7 @@ services:
       - webnet
   worker:
     build: .
-    command: celery -A core worker -l info
+    command: uv run celery -A core worker -l info
     volumes:
       - .:/app
     environment:
@@ -62,7 +62,7 @@ services:
 
   beat:
     build: .
-    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: uv run celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/app
     environment:
