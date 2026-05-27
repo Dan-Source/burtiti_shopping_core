@@ -15,5 +15,7 @@ dependencies = [
     "redis>=4.6.0",
     "django-celery-beat>=2.3.0",
     "gunicorn>=21.2.0",
+    "awsebcli>=3.27.2",
+    "botocore[crt]>=1.43.15",
 ]
 

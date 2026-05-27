@@ -45,3 +45,8 @@ whoosh_index/
 
 # Cache
 static/CACHE/
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
