@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15
-    restart: always
+    restart: on-failure
     environment:
       POSTGRES_DB: buriti
       POSTGRES_USER: buriti
@@ -13,7 +13,7 @@ services:
 
   redis:
     image: redis:7
-    restart: always
+    restart: on-failure
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"

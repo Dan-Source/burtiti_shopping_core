@@ -17,5 +17,6 @@ dependencies = [
     "gunicorn>=21.2.0",
     "awsebcli>=3.27.2",
     "botocore[crt]>=1.43.15",
+    "django-oscar-api>=3.3.0",
 ]
 

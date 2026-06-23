@@ -147,7 +147,7 @@ python --version
 
 This project requires Python 3.14+.
 
-### 2. sqlite OperationalError: no such table
+### 2. PostgreSQL OperationalError / relation does not exist
 
 Cause:
 - Database schema not migrated.
@@ -156,6 +156,12 @@ Fix:
 
 ```bash
 uv run python manage.py migrate
+```
+
+If PostgreSQL is not running locally, start dependencies first:
+
+```bash
+docker compose up -d db redis
 ```
 
 ### 3. Port already in use when running server
@@ -235,6 +241,4 @@ uv run python manage.py compress --force
 ```
 
 ## Notes
-
-- Tailwind CSS is not part of the active frontend pipeline.
 - Prefer editing SCSS in static/src/bootstrap_theme.scss for global styling changes.
