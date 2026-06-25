@@ -22,10 +22,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
+from core.views import csrf_token_view
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include(apps.get_app_config("oscar").urls[0])),
     path("api/", include("oscarapi.urls")),
+    path("api/csrf/", csrf_token_view, name="api-csrf"),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="api-schema"), name="api-redoc"),

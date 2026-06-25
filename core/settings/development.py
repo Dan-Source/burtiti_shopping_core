@@ -3,5 +3,8 @@ from .base import *
 # Development-specific settings
 DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
+OSCARAPI_ENABLE_REGISTRATION = True
 
-# Optionally enable console email backend in development (already in base)
+CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + [
+    "http://192.168.10.230:3000"
+]

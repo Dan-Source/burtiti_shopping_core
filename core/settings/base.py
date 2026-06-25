@@ -86,6 +86,7 @@ INSTALLED_APPS = DJANGO_APPS + DJANGO_OSCAR_APPS + THIRD_PARTY_APPS
 SITE_ID = 1
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -222,6 +223,13 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
 }
 
 SPECTACULAR_SETTINGS = {
@@ -229,3 +237,30 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "REST API documentation for Buriti Shopping Core.",
     "VERSION": "1.0.0",
 }
+
+# Keep API registration disabled by default. Enable explicitly by env var,
+# or override in development settings.
+OSCARAPI_ENABLE_REGISTRATION = (
+    os.getenv("OSCARAPI_ENABLE_REGISTRATION", "False").lower() == "true"
+)
+
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "x-csrf-token",
+    "x-request-source",
+    "X-Csrftoken",
+    "x-csrftoken",
+    "X-CSRFTOKEN",
+]
