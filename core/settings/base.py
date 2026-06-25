@@ -78,6 +78,7 @@ THIRD_PARTY_APPS = [
     "compressor",
     "oscarapi",
     "rest_framework",
+    "drf_spectacular",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + DJANGO_OSCAR_APPS + THIRD_PARTY_APPS
@@ -217,3 +218,14 @@ OSCAR_CURRENCY_FORMAT = {
 
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Buriti Shopping API",
+    "DESCRIPTION": "REST API documentation for Buriti Shopping Core.",
+    "VERSION": "1.0.0",
+}

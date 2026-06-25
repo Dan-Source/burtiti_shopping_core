@@ -44,6 +44,9 @@ Open:
 - Shop: http://127.0.0.1:8000/
 - Admin: http://127.0.0.1:8000/admin/
 - Dashboard: http://127.0.0.1:8000/dashboard/
+- API schema (OpenAPI): http://127.0.0.1:8000/api/schema/
+- API docs (Swagger UI): http://127.0.0.1:8000/api/docs/
+- API docs (ReDoc): http://127.0.0.1:8000/api/redoc/
 
 ## Daily Commands
 

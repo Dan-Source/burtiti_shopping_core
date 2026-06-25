@@ -18,5 +18,6 @@ dependencies = [
     "awsebcli>=3.27.2",
     "botocore[crt]>=1.43.15",
     "django-oscar-api>=3.3.0",
+    "drf-spectacular[sidecar]>=0.27.2",
 ]
 
