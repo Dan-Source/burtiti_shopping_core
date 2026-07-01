@@ -1,0 +1,31 @@
+name: Local Assistant
+version: 1.0.0
+schema: v1
+
+models:
+  - name: Qwen2.5-Coder 3B
+    provider: ollama
+    model: qwen2.5-coder:3b
+    roles:
+      - chat
+      - edit
+      - apply
+
+  - name: Qwen2.5-Coder 1.5B (Autocomplete)
+    provider: ollama
+    model: qwen2.5-coder:1.5b
+    roles:
+      - autocomplete
+
+  - name: Autodetect
+    provider: ollama
+    model: AUTODETECT
+
+context:
+  - provider: code
+  - provider: docs
+  - provider: diff
+  - provider: terminal
+  - provider: problems
+  - provider: folder
+  - provider: codebase

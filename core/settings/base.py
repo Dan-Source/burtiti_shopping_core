@@ -5,6 +5,7 @@ This file contains settings common to all environments.
 
 import os
 from pathlib import Path
+from datetime import timedelta
 
 from oscar.defaults import *
 
@@ -78,6 +79,7 @@ THIRD_PARTY_APPS = [
     "compressor",
     "oscarapi",
     "rest_framework",
+    "rest_framework_simplejwt",
     "drf_spectacular",
 ]
 
@@ -264,3 +266,8 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "X-CSRFTOKEN",
 ]
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+}
