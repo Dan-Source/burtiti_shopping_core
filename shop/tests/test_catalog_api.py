@@ -144,16 +144,18 @@ class CatalogApiTests(TestCase):
         self.assertEqual(len(payload), 1)
         self.assertIn("children", payload[0])
 
-    def test_non_catalog_oscar_api_routes_are_not_exposed(self):
+    def test_non_catalog_oscar_api_routes_are_exposed(self):
         response = self.client.get("/api/basket/")
 
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
 
-    def test_schema_only_contains_catalog_routes(self):
+    def test_schema_contains_catalog_and_oscar_api_routes(self):
         response = self.client.get("/api/schema/")
 
         self.assertEqual(response.status_code, 200)
         body = response.content.decode("utf-8")
         self.assertIn("/api/products/", body)
         self.assertIn("/api/categories/", body)
-        self.assertNotIn("/api/basket/", body)
+        self.assertIn("/api/basket/", body)
+        self.assertIn("/api/login/", body)
+        self.assertIn("/api/register/", body)

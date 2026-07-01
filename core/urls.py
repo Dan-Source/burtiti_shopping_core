@@ -24,13 +24,32 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
-from core.views import csrf_token_view
+from core.views import (
+    CurrentBasketLineDetailView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
+    UserMeView,
+    csrf_token_view,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("shop.store.urls")),
     path("", include(apps.get_app_config("oscar").urls[0])),
     path("api/", include("api.urls")),
+    path("api/", include("oscarapi.urls")),
+    path("api/users/me/", UserMeView.as_view(), name="api-user-me"),
+    path("api/password-reset/", PasswordResetRequestView.as_view(), name="api-password-reset"),
+    path(
+        "api/password-reset/confirm/",
+        PasswordResetConfirmView.as_view(),
+        name="api-password-reset-confirm",
+    ),
+    path(
+        "api/basket/lines/<int:pk>/",
+        CurrentBasketLineDetailView.as_view(),
+        name="api-current-basket-line-detail",
+    ),
     path("api/csrf/", csrf_token_view, name="api-csrf"),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
