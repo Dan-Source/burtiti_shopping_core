@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from datetime import timedelta
 
@@ -159,3 +160,20 @@ class CatalogApiTests(TestCase):
         self.assertIn("/api/basket/", body)
         self.assertIn("/api/login/", body)
         self.assertIn("/api/register/", body)
+
+    def test_add_product_to_basket_accepts_product_id_payload(self):
+        response = self.client.post(
+            "/api/basket/add-product/",
+            data=json.dumps({"product_id": self.product_a.id, "quantity": 1}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("lines", payload)
+
+        lines_response = self.client.get(payload["lines"])
+        self.assertEqual(lines_response.status_code, 200)
+        lines_payload = lines_response.json()
+        self.assertEqual(len(lines_payload), 1)
+        self.assertEqual(lines_payload[0]["quantity"], 1)

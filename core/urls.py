@@ -25,6 +25,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
 from core.views import (
+    CompatibleAddProductView,
     CurrentBasketLineDetailView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
@@ -37,6 +38,7 @@ urlpatterns = [
     path("", include("shop.store.urls")),
     path("", include(apps.get_app_config("oscar").urls[0])),
     path("api/", include("api.urls")),
+    path("api/basket/add-product/", CompatibleAddProductView.as_view(), name="api-basket-add-product"),
     path("api/", include("oscarapi.urls")),
     path("api/users/me/", UserMeView.as_view(), name="api-user-me"),
     path("api/password-reset/", PasswordResetRequestView.as_view(), name="api-password-reset"),

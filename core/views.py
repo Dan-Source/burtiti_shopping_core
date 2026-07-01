@@ -12,10 +12,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from oscarapi.basket import operations
-from oscarapi.views.basket import BasketLineDetail
+from oscarapi.views.basket import AddProductView, BasketLineDetail
+from oscar.core.loading import get_model
 
 
 User = get_user_model()
+Product = get_model("catalogue", "Product")
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -109,6 +111,59 @@ class CurrentBasketLineDetailView(BasketLineDetail):
         basket = operations.get_basket(self.request)
         prepared_basket = operations.prepare_basket(basket, self.request)
         return prepared_basket.all_lines()
+
+
+class CompatibleAddProductView(AddProductView):
+    def post(self, request, *args, **kwargs):
+        payload = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+
+        # Keep oscarapi compatibility while supporting frontend payloads using product_id.
+        if "url" not in payload and "product_id" in payload:
+            try:
+                product = Product.objects.get(pk=int(payload["product_id"]))
+            except (ValueError, TypeError, Product.DoesNotExist):
+                return Response(
+                    {"reason": {"product_id": ["Invalid product id."]}},
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+
+            try:
+                quantity = int(payload.get("quantity", 1))
+            except (ValueError, TypeError):
+                return Response(
+                    {"reason": {"quantity": ["A valid integer is required."]}},
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+
+            basket = operations.get_basket(request)
+            options = payload.get("options", [])
+
+            basket_valid, message = self.validate(basket, product, quantity, options)
+            if not basket_valid:
+                return Response({"reason": message}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+            basket.add_product(product, quantity=quantity, options=options)
+            operations.apply_offers(request, basket)
+            ser = self.serializer_class(basket, context={"request": request})
+            return Response(ser.data)
+
+        p_ser = self.add_product_serializer_class(data=payload, context={"request": request})
+        if p_ser.is_valid():
+            basket = operations.get_basket(request)
+            product = p_ser.validated_data["url"]
+            quantity = p_ser.validated_data["quantity"]
+            options = p_ser.validated_data.get("options", [])
+
+            basket_valid, message = self.validate(basket, product, quantity, options)
+            if not basket_valid:
+                return Response({"reason": message}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+            basket.add_product(product, quantity=quantity, options=options)
+            operations.apply_offers(request, basket)
+            ser = self.serializer_class(basket, context={"request": request})
+            return Response(ser.data)
+
+        return Response({"reason": p_ser.errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 @ensure_csrf_cookie
