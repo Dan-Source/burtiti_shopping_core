@@ -28,8 +28,9 @@ from core.views import csrf_token_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", include("shop.store.urls")),
     path("", include(apps.get_app_config("oscar").urls[0])),
-    path("api/", include("oscarapi.urls")),
+    path("api/", include("api.urls")),
     path("api/csrf/", csrf_token_view, name="api-csrf"),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),

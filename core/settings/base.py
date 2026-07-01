@@ -235,9 +235,19 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Buriti Shopping API",
-    "DESCRIPTION": "REST API documentation for Buriti Shopping Core.",
+    "TITLE": "Buriti Shopping - API de Catalogo",
+    "DESCRIPTION": (
+        "API REST de produtos, categorias e busca. Segue o padrao django-oscar com "
+        "paginacao, filtros e ordenacao via query params."
+    ),
     "VERSION": "1.0.0",
+    "CONTACT": {
+        "name": "Equipe Buriti Shopping",
+    },
+    "SERVERS": [
+        {"url": "http://0.0.0.0:8000", "description": "Desenvolvimento local"},
+        {"url": "https://api.buritishopping.com.br", "description": "Producao"},
+    ],
 }
 
 # Keep API registration disabled by default. Enable explicitly by env var,

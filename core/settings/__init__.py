@@ -6,5 +6,7 @@ DJANGO_ENV = os.getenv('DJANGO_ENV', 'development')
 
 if DJANGO_ENV == 'production':
     from .production import *  # noqa: F401,F403
+elif DJANGO_ENV == 'test':
+    from .test import *  # noqa: F401,F403
 else:
     from .development import *  # noqa: F401,F403
