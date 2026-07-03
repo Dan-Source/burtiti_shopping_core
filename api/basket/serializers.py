@@ -153,6 +153,13 @@ class ShippingMethodSerializer(serializers.Serializer):
     price_incl_tax = serializers.CharField(allow_null=True)
 
 
+class CheckoutPaymentMethodSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    name = serializers.CharField(allow_blank=True, allow_null=True)
+    label = serializers.CharField(allow_blank=True, allow_null=True)
+    description = serializers.CharField(allow_blank=True, allow_null=True)
+
+
 class CheckoutPayloadSerializer(serializers.Serializer):
     shipping_address = serializers.JSONField(required=False)
     billing_address = serializers.JSONField(required=False)
@@ -179,12 +186,53 @@ class OrderSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     number = serializers.CharField(allow_null=True)
     status = serializers.CharField()
+    payment_status = serializers.SerializerMethodField()
     date_placed = serializers.DateTimeField(allow_null=True)
     total_incl_tax = serializers.SerializerMethodField()
+    pix_qr_code_image = serializers.SerializerMethodField()
+    pix_qr_code = serializers.SerializerMethodField()
+    pix_copy_paste = serializers.SerializerMethodField()
+    pix_expires_at = serializers.SerializerMethodField()
     lines = serializers.SerializerMethodField()
+
+    def get_payment_status(self, obj: Any) -> str | None:
+        transaction = getattr(obj, "pix_transaction", None)
+        if transaction is not None:
+            return transaction.status
+
+        normalized_status = (getattr(obj, "status", "") or "").lower()
+        if normalized_status == "authorized":
+            return "paid"
+        if normalized_status in {"pending", "payment declined"}:
+            return "pending"
+        return None
 
     def get_total_incl_tax(self, obj: Any) -> str | None:
         return decimal_to_string(getattr(obj, "total_incl_tax", None))
+
+    def get_pix_qr_code_image(self, obj: Any) -> str | None:
+        transaction = getattr(obj, "pix_transaction", None)
+        if transaction is None:
+            return None
+        return transaction.qr_code_image or None
+
+    def get_pix_qr_code(self, obj: Any) -> str | None:
+        transaction = getattr(obj, "pix_transaction", None)
+        if transaction is None:
+            return None
+        return transaction.qr_code_payload or None
+
+    def get_pix_copy_paste(self, obj: Any) -> str | None:
+        transaction = getattr(obj, "pix_transaction", None)
+        if transaction is None:
+            return None
+        return transaction.copy_paste or None
+
+    def get_pix_expires_at(self, obj: Any):
+        transaction = getattr(obj, "pix_transaction", None)
+        if transaction is None:
+            return None
+        return transaction.expires_at
 
     def get_lines(self, obj: Any) -> list[dict[str, Any]]:
         lines = obj.lines.select_related("product").all()

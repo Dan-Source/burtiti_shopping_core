@@ -4,6 +4,7 @@ This file contains settings common to all environments.
 """
 
 import os
+import importlib.util
 from pathlib import Path
 from datetime import timedelta
 
@@ -83,7 +84,14 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + DJANGO_OSCAR_APPS + THIRD_PARTY_APPS
+if importlib.util.find_spec("oscarapicheckout"):
+    THIRD_PARTY_APPS.append("oscarapicheckout")
+
+PROJECT_APPS = [
+    "api.checkout",
+]
+
+INSTALLED_APPS = DJANGO_APPS + DJANGO_OSCAR_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
 SITE_ID = 1
 
@@ -281,3 +289,35 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
+
+# Checkout status pipeline for asynchronous payment flows like PIX.
+OSCAR_INITIAL_ORDER_STATUS = os.getenv("OSCAR_INITIAL_ORDER_STATUS", "Pending")
+OSCAR_ORDER_STATUS_PIPELINE = {
+    "Pending": ("Payment Declined", "Authorized", "Cancelled"),
+    "Payment Declined": ("Pending", "Cancelled"),
+    "Authorized": ("Being processed", "Cancelled"),
+    "Being processed": ("Complete", "Cancelled"),
+    "Complete": (),
+    "Cancelled": (),
+}
+
+# Supported checkout payment methods exposed by the API.
+API_ENABLED_PAYMENT_METHODS = [
+    {
+        "code": "pix",
+        "name": "PIX",
+        "label": "Pagar com PIX",
+        "description": "Pagamento instantaneo por QR Code",
+        "handler": "api.checkout.payment_methods.PixPaymentMethod",
+    },
+    {
+        "code": "cash_on_delivery",
+        "name": "Pagamento na Entrega",
+        "label": "Pagar na entrega",
+        "description": "Pedido confirmado e pagamento realizado no recebimento",
+        "handler": "api.checkout.payment_methods.CashOnDeliveryPaymentMethod",
+    },
+]
+
+PIX_GATEWAY_BACKEND = os.getenv("PIX_GATEWAY_BACKEND", "api.checkout.gateway.MockPixGateway")
+PIX_EXPIRATION_MINUTES = int(os.getenv("PIX_EXPIRATION_MINUTES", "30"))

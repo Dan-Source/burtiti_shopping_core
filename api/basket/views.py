@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
+from django.utils.module_loading import import_string
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from oscar.core.loading import get_class, get_model
 from oscarapi.basket import operations
@@ -18,6 +20,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from api.basket.serializers import (
     AddProductRequestSerializer,
     AddVoucherRequestSerializer,
+    CheckoutPaymentMethodSerializer,
     CheckoutPayloadSerializer,
     ContractErrorSerializer,
     OrderSerializer,
@@ -27,6 +30,9 @@ from api.basket.serializers import (
     decimal_to_string,
     serialize_cart,
 )
+from api.checkout.models import PixTransaction
+from api.checkout.payment_methods import mark_pix_as_paid
+from api.checkout.services import get_enabled_payment_methods, get_payment_method_by_code
 
 Product = get_model("catalogue", "Product")
 Line = get_model("basket", "Line")
@@ -35,6 +41,7 @@ UserAddress = get_model("address", "UserAddress")
 ShippingAddress = get_model("order", "ShippingAddress")
 BillingAddress = get_model("order", "BillingAddress")
 Repository = get_class("shipping.repository", "Repository")
+Order = get_model("order", "Order")
 
 
 class BasketContractErrorMixin:
@@ -246,6 +253,28 @@ class BasketLineDetailView(BasketContractErrorMixin, ContractAPIView):
         return Response({"success": True}, status=status.HTTP_200_OK)
 
 
+class CheckoutPaymentMethodsView(ContractAPIView):
+    @extend_schema(
+        operation_id="getCheckoutPaymentMethods",
+        summary="Metodos de pagamento do checkout",
+        tags=["Pedidos"],
+        responses={200: OpenApiResponse(description="Metodos de pagamento disponiveis")},
+    )
+    def get(self, request):
+        methods = get_enabled_payment_methods()
+        payload = [
+            {
+                "code": method["code"],
+                "name": method.get("name"),
+                "label": method.get("label"),
+                "description": method.get("description"),
+            }
+            for method in methods
+        ]
+        serializer = CheckoutPaymentMethodSerializer(payload, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class CheckoutView(BasketContractErrorMixin, ContractAPIView):
     def _country_url(self, request, payload: dict[str, Any]) -> str | None:
         country_value = payload.get("country")
@@ -327,6 +356,18 @@ class CheckoutView(BasketContractErrorMixin, ContractAPIView):
             return self.error("Carrinho vazio.")
 
         data = serializer.validated_data
+        payment_method_code = data.get("payment_method_code")
+
+        enabled_methods = get_enabled_payment_methods()
+        if not enabled_methods:
+            return self.error("Nenhum metodo de pagamento esta habilitado para o checkout.")
+
+        if not payment_method_code:
+            payment_method_code = enabled_methods[0]["code"]
+
+        payment_method_config = get_payment_method_by_code(payment_method_code)
+        if payment_method_config is None:
+            return self.error("Metodo de pagamento invalido ou indisponivel.")
 
         try:
             shipping_address = self._build_checkout_address(
@@ -373,7 +414,58 @@ class CheckoutView(BasketContractErrorMixin, ContractAPIView):
         except Exception as exc:  # pragma: no cover
             return self.error(str(exc))
 
+        try:
+            handler_cls = import_string(payment_method_config["handler"])
+            payment_result = handler_cls().process(request=request, basket=basket, order=order)
+        except Exception as exc:
+            return self.error(f"Falha ao processar pagamento: {exc}")
+
         basket.freeze()
 
         response_payload = OrderSerializer(order, context={"request": request}).data
+        response_payload["payment_status"] = payment_result.payment_status
         return Response(response_payload, status=status.HTTP_201_CREATED)
+
+
+class PixStatusView(BasketContractErrorMixin, ContractAPIView):
+    @extend_schema(
+        operation_id="getPixPaymentStatus",
+        summary="Consultar status do pagamento PIX",
+        tags=["Pedidos"],
+        responses={
+            200: OpenApiResponse(description="Status atualizado do PIX"),
+            404: OpenApiResponse(response=ContractErrorSerializer, description="Pedido nao encontrado"),
+        },
+    )
+    def get(self, request, order_id: int):
+        order = get_object_or_404(Order, id=order_id)
+        if not request.user.is_staff and order.user_id != getattr(request.user, "id", None):
+            return self.error("Pedido nao encontrado.", code=status.HTTP_404_NOT_FOUND)
+
+        transaction = getattr(order, "pix_transaction", None)
+        if transaction is None:
+            return self.error("Transacao PIX nao encontrada para este pedido.", code=status.HTTP_404_NOT_FOUND)
+
+        payment_method_config = get_payment_method_by_code("pix")
+        if payment_method_config is None:
+            return self.error("Metodo PIX nao esta habilitado.", code=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            handler_cls = import_string(payment_method_config["handler"])
+            gateway = handler_cls()._get_gateway()
+            gateway_result = gateway.get_status(transaction)
+        except Exception as exc:
+            return self.error(f"Falha ao consultar status PIX: {exc}")
+
+        transaction.status = gateway_result.get("status", PixTransaction.STATUS_PENDING)
+        transaction.raw_response = {
+            **(transaction.raw_response or {}),
+            **(gateway_result.get("raw_response") or {}),
+        }
+        transaction.save(update_fields=["status", "raw_response", "updated_at"])
+
+        if transaction.status == PixTransaction.STATUS_PAID:
+            mark_pix_as_paid(order, transaction)
+
+        payload = OrderSerializer(order, context={"request": request}).data
+        return Response(payload, status=status.HTTP_200_OK)

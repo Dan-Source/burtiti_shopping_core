@@ -36,6 +36,7 @@ urlpatterns = [
     path("", include("shop.store.urls")),
     path("", include(apps.get_app_config("oscar").urls[0])),
     path("api/", include("api.urls")),
+    path("api/", include("oscarapi.urls")),
     path("api/users/me/", UserMeView.as_view(), name="api-user-me"),
     path("api/password-reset/", PasswordResetRequestView.as_view(), name="api-password-reset"),
     path(
@@ -50,7 +51,6 @@ urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

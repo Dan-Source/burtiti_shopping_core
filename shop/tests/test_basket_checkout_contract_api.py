@@ -1,7 +1,7 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from shop.tests.factories import ProductFactory
 
@@ -111,7 +111,7 @@ class BasketCheckoutContractApiTests(TestCase):
 
         response = self.client.post(
             "/api/checkout/",
-            data=json.dumps({"payment_method_code": "credit_card"}),
+            data=json.dumps({"payment_method_code": "cash_on_delivery"}),
             content_type="application/json",
         )
 
@@ -119,12 +119,44 @@ class BasketCheckoutContractApiTests(TestCase):
         payload = response.json()
         self.assertIn("id", payload)
         self.assertIn("status", payload)
+        self.assertEqual(payload["payment_status"], "pending")
         self.assertIn("lines", payload)
+
+    def test_checkout_payment_methods_returns_enabled_methods(self):
+        response = self.client.get("/api/checkout/payment-methods/")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIsInstance(payload, list)
+        self.assertTrue(any(item["code"] == "pix" for item in payload))
+        self.assertTrue(any(item["code"] == "cash_on_delivery" for item in payload))
+
+    @override_settings(PIX_GATEWAY_BACKEND="api.checkout.gateway.AlwaysPaidPixGateway")
+    def test_pix_checkout_returns_qr_and_status_endpoint_updates_payment(self):
+        self._add_product(quantity=1)
+
+        checkout_response = self.client.post(
+            "/api/checkout/",
+            data=json.dumps({"payment_method_code": "pix"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(checkout_response.status_code, 201)
+        checkout_payload = checkout_response.json()
+        self.assertEqual(checkout_payload["payment_status"], "pending")
+        self.assertIn("pix_qr_code", checkout_payload)
+        self.assertTrue(checkout_payload["pix_qr_code"])
+
+        status_response = self.client.get(f"/api/checkout/pix/status/{checkout_payload['id']}/")
+        self.assertEqual(status_response.status_code, 200)
+        status_payload = status_response.json()
+        self.assertEqual(status_payload["payment_status"], "paid")
+        self.assertEqual(status_payload["status"], "Authorized")
 
     def test_checkout_with_empty_basket_returns_400(self):
         response = self.client.post(
             "/api/checkout/",
-            data=json.dumps({"payment_method_code": "credit_card"}),
+            data=json.dumps({"payment_method_code": "pix"}),
             content_type="application/json",
         )
 
