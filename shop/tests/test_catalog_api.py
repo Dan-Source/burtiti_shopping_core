@@ -171,9 +171,6 @@ class CatalogApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertIn("lines", payload)
-
-        lines_response = self.client.get(payload["lines"])
-        self.assertEqual(lines_response.status_code, 200)
-        lines_payload = lines_response.json()
-        self.assertEqual(len(lines_payload), 1)
-        self.assertEqual(lines_payload[0]["quantity"], 1)
+        self.assertIsInstance(payload["lines"], list)
+        self.assertEqual(len(payload["lines"]), 1)
+        self.assertEqual(payload["lines"][0]["quantity"], 1)
