@@ -162,3 +162,101 @@ class BasketCheckoutContractApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("detail", response.json())
+
+    def test_checkout_accepts_brazil_address_contract_payload(self):
+        self._add_product(quantity=1)
+
+        response = self.client.post(
+            "/api/checkout/",
+            data=json.dumps(
+                {
+                    "payment_method_code": "cash_on_delivery",
+                    "shipping_address": {
+                        "cep": "77000-120",
+                        "street": "Avenida JK",
+                        "number": "123",
+                        "complement": "Apto 10",
+                        "bairro": "Centro",
+                        "city": "Palmas",
+                        "state": "TO",
+                        "full_name": "Maria Silva",
+                        "phone": "+55 63 99999-1234",
+                    },
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertIn("id", payload)
+        self.assertEqual(payload["payment_status"], "pending")
+
+    def test_checkout_rejects_brazil_address_without_number(self):
+        self._add_product(quantity=1)
+
+        response = self.client.post(
+            "/api/checkout/",
+            data=json.dumps(
+                {
+                    "payment_method_code": "cash_on_delivery",
+                    "shipping_address": {
+                        "cep": "77000120",
+                        "street": "Avenida JK",
+                        "bairro": "Centro",
+                        "city": "Palmas",
+                        "state": "TO",
+                        "full_name": "Maria Silva",
+                    },
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("number", response.json().get("detail", ""))
+
+    def test_checkout_rejects_invalid_brazil_cep_format(self):
+        self._add_product(quantity=1)
+
+        response = self.client.post(
+            "/api/checkout/",
+            data=json.dumps(
+                {
+                    "payment_method_code": "cash_on_delivery",
+                    "shipping_address": {
+                        "cep": "77-ABC",
+                        "street": "Avenida JK",
+                        "number": "123",
+                        "bairro": "Centro",
+                        "city": "Palmas",
+                        "state": "TO",
+                        "full_name": "Maria Silva",
+                    },
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("CEP invalido", response.json().get("detail", ""))
+
+    def test_checkout_rejects_unknown_address_fields(self):
+        self._add_product(quantity=1)
+
+        response = self.client.post(
+            "/api/checkout/",
+            data=json.dumps(
+                {
+                    "payment_method_code": "cash_on_delivery",
+                    "shipping_address": {
+                        "line1": "Rua das Flores, 120",
+                        "foo": "bar",
+                    },
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("nao suportados", response.json().get("detail", ""))

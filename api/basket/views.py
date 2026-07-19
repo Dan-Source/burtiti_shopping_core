@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from django.shortcuts import get_object_or_404
@@ -276,6 +277,106 @@ class CheckoutPaymentMethodsView(ContractAPIView):
 
 
 class CheckoutView(BasketContractErrorMixin, ContractAPIView):
+    CEP_REGEX = re.compile(r"^\d{5}-?\d{3}$")
+    BR_ADDRESS_REQUIRED_FIELDS = {
+        "cep",
+        "street",
+        "number",
+        "bairro",
+        "city",
+        "state",
+        "full_name",
+    }
+    BR_ADDRESS_OPTIONAL_FIELDS = {"complement", "phone", "country", "email"}
+
+    def _split_full_name(self, full_name: str) -> tuple[str, str]:
+        name = " ".join((full_name or "").split()).strip()
+        if not name:
+            raise ValueError("Nome completo e obrigatorio.")
+
+        parts = name.split(" ", 1)
+        first_name = parts[0]
+        last_name = parts[1] if len(parts) > 1 else "-"
+        return first_name, last_name
+
+    def _normalize_cep(self, cep: str) -> str:
+        normalized = (cep or "").strip()
+        if not self.CEP_REGEX.match(normalized):
+            raise ValueError("CEP invalido. Use o formato 00000-000.")
+
+        digits = normalized.replace("-", "")
+        return f"{digits[:5]}-{digits[5:]}"
+
+    def _is_brazil_contract_payload(self, raw_address: dict[str, Any]) -> bool:
+        known_br_fields = self.BR_ADDRESS_REQUIRED_FIELDS | self.BR_ADDRESS_OPTIONAL_FIELDS
+        return any(field in raw_address for field in known_br_fields)
+
+    def _validate_unknown_fields(self, raw_address: dict[str, Any], allowed_fields: set[str]):
+        unknown_fields = sorted(set(raw_address.keys()) - allowed_fields)
+        if unknown_fields:
+            raise ValueError(f"Campos de endereco nao suportados: {', '.join(unknown_fields)}.")
+
+    def _map_brazil_address_payload(self, raw_address: dict[str, Any], model_cls) -> dict[str, Any]:
+        missing_fields = [
+            field
+            for field in self.BR_ADDRESS_REQUIRED_FIELDS
+            if not str(raw_address.get(field, "")).strip()
+        ]
+        if missing_fields:
+            raise ValueError(f"Campos obrigatorios do endereco ausentes: {', '.join(sorted(missing_fields))}.")
+
+        allowed_input_fields = self.BR_ADDRESS_REQUIRED_FIELDS | self.BR_ADDRESS_OPTIONAL_FIELDS
+        self._validate_unknown_fields(raw_address, allowed_input_fields)
+
+        first_name, last_name = self._split_full_name(str(raw_address.get("full_name", "")))
+        line1 = str(raw_address.get("street", "")).strip()
+        number = str(raw_address.get("number", "")).strip()
+        complement = str(raw_address.get("complement", "")).strip()
+        bairro = str(raw_address.get("bairro", "")).strip()
+        city = str(raw_address.get("city", "")).strip()
+        state = str(raw_address.get("state", "")).strip()
+        phone = str(raw_address.get("phone", "")).strip()
+        postcode = self._normalize_cep(str(raw_address.get("cep", "")))
+
+        line2 = f"Numero: {number}"
+        if complement:
+            line2 = f"{line2} - Complemento: {complement}"
+
+        normalized = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "line1": line1,
+            "line2": line2,
+            "line3": f"Bairro: {bairro}",
+            "line4": city,
+            "state": state,
+            "postcode": postcode,
+        }
+
+        model_fields = {field.name for field in model_cls._meta.fields}
+        if "phone_number" in model_fields and phone:
+            normalized["phone_number"] = phone
+
+        return normalized
+
+    def _extract_email_from_address_payload(self, raw_address: Any) -> str | None:
+        if isinstance(raw_address, dict):
+            email = raw_address.get("email")
+            if isinstance(email, str) and email.strip():
+                return email.strip()
+        return None
+
+    def _validate_checkout_email(self, request, guest_email: str | None):
+        if guest_email:
+            return
+
+        authenticated_email = None
+        if getattr(request.user, "is_authenticated", False):
+            authenticated_email = (getattr(request.user, "email", "") or "").strip()
+
+        if not authenticated_email:
+            raise ValueError("E-mail e obrigatorio para finalizar o pedido.")
+
     def _country_url(self, request, payload: dict[str, Any]) -> str | None:
         country_value = payload.get("country")
         if isinstance(country_value, str) and country_value.startswith("http"):
@@ -288,6 +389,18 @@ class CheckoutView(BasketContractErrorMixin, ContractAPIView):
             country = Country.objects.filter(iso_3166_1_a2="BR").first() or Country.objects.filter(
                 is_shipping_country=True
             ).first()
+        if country is None:
+            country, _ = Country.objects.get_or_create(
+                iso_3166_1_a2="BR",
+                defaults={
+                    "iso_3166_1_a3": "BRA",
+                    "iso_3166_1_numeric": "076",
+                    "printable_name": "Brasil",
+                    "name": "Brazil",
+                    "display_order": 1,
+                    "is_shipping_country": True,
+                },
+            )
         if country is None:
             return None
 
@@ -326,8 +439,13 @@ class CheckoutView(BasketContractErrorMixin, ContractAPIView):
         if not isinstance(raw_address, dict):
             raise ValueError("Endereco invalido.")
 
-        allowed_fields = {field.name for field in model_cls._meta.fields}
-        address_payload = {key: value for key, value in raw_address.items() if key in allowed_fields}
+        if self._is_brazil_contract_payload(raw_address):
+            address_payload = self._map_brazil_address_payload(raw_address, model_cls)
+        else:
+            allowed_fields = {field.name for field in model_cls._meta.fields}
+            self._validate_unknown_fields(raw_address, allowed_fields | {"country"})
+            address_payload = {key: value for key, value in raw_address.items() if key in allowed_fields}
+
         country_url = self._country_url(request, raw_address)
         if country_url:
             address_payload["country"] = country_url
@@ -400,6 +518,16 @@ class CheckoutView(BasketContractErrorMixin, ContractAPIView):
             checkout_payload["billing_address"] = billing_address
 
         guest_email = data.get("guest_email")
+        if not guest_email:
+            guest_email = self._extract_email_from_address_payload(data.get("shipping_address"))
+        if not guest_email:
+            guest_email = self._extract_email_from_address_payload(data.get("billing_address"))
+
+        try:
+            self._validate_checkout_email(request, guest_email)
+        except ValueError as exc:
+            return self.error(str(exc))
+
         if guest_email:
             checkout_payload["guest_email"] = guest_email
 
