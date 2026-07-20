@@ -315,6 +315,22 @@ class CheckoutView(BasketContractErrorMixin, ContractAPIView):
         unknown_fields = sorted(set(raw_address.keys()) - allowed_fields)
         if unknown_fields:
             raise ValueError(f"Campos de endereco nao suportados: {', '.join(unknown_fields)}.")
+    
+    def _normalize_phone_number(self, phone: str) -> str:
+        normalized = (phone or "").strip()
+        if not normalized:
+            return ""
+
+        digits = re.sub(r"\D", "", normalized)
+        if len(digits) < 10 or len(digits) > 11:
+            raise ValueError("Numero de telefone invalido. Use o formato (00) 00000-0000.")
+
+        if len(digits) == 10:
+            digits = f"55{digits}"
+        elif len(digits) == 11 and not digits.startswith("55"):
+            digits = f"55{digits}"
+
+        return f"+{digits}"
 
     def _map_brazil_address_payload(self, raw_address: dict[str, Any], model_cls) -> dict[str, Any]:
         missing_fields = [
@@ -335,7 +351,7 @@ class CheckoutView(BasketContractErrorMixin, ContractAPIView):
         bairro = str(raw_address.get("bairro", "")).strip()
         city = str(raw_address.get("city", "")).strip()
         state = str(raw_address.get("state", "")).strip()
-        phone = str(raw_address.get("phone", "")).strip()
+        phone = self._normalize_phone_number(str(raw_address.get("phone", "")).strip())
         postcode = self._normalize_cep(str(raw_address.get("cep", "")))
 
         line2 = f"Numero: {number}"
