@@ -160,12 +160,48 @@ class CheckoutPaymentMethodSerializer(serializers.Serializer):
     description = serializers.CharField(allow_blank=True, allow_null=True)
 
 
+class CheckoutAddressSerializer(serializers.Serializer):
+    full_name = serializers.CharField(required=False)
+    cep = serializers.CharField(required=False)
+    street = serializers.CharField(required=False)
+    number = serializers.CharField(required=False)
+    bairro = serializers.CharField(required=False)
+    city = serializers.CharField(required=False)
+    state = serializers.CharField(required=False)
+    complement = serializers.CharField(required=False, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    country = serializers.CharField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+
+
 class CheckoutPayloadSerializer(serializers.Serializer):
     shipping_address = serializers.JSONField(required=False)
     billing_address = serializers.JSONField(required=False)
     shipping_method_code = serializers.CharField(required=False, allow_blank=False)
     payment_method_code = serializers.CharField(required=False, allow_blank=False)
     guest_email = serializers.EmailField(required=False, allow_null=True)
+
+    def _validate_address_dict(self, address: dict | int | None):
+        if address is None:
+            return
+        if isinstance(address, int):
+            if address <= 0:
+                raise serializers.ValidationError("ID de endereco invalido.")
+            return
+        if isinstance(address, dict):
+            serializer = CheckoutAddressSerializer(data=address)
+            if not serializer.is_valid():
+                first_error = next(iter(serializer.errors.values()))
+                detail = first_error[0] if isinstance(first_error, list) else str(first_error)
+                raise serializers.ValidationError(str(detail))
+
+    def validate_shipping_address(self, value):
+        self._validate_address_dict(value)
+        return value
+
+    def validate_billing_address(self, value):
+        self._validate_address_dict(value)
+        return value
 
 
 class OrderLineSerializer(serializers.Serializer):

@@ -1,0 +1,240 @@
+paths:
+  /api/csrf/:
+    get:
+      operationId: getCsrfToken
+      summary: Obter token CSRF
+      tags: [Autenticação]
+      description: |
+        Retorna o token CSRF necessário para requisições mutantes autenticadas
+        por sessão (não-JWT). O token deve ser enviado no header `X-CSRF-Token`.
+      responses:
+        "200":
+          description: Token CSRF
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CsrfResponse"
+
+  /api/login/:
+    post:
+      operationId: login
+      summary: Login (sessão)
+      tags: [Autenticação]
+      description: |
+        Login via sessão django-oscar. Retorna cookie de sessão.
+        Se o backend tiver JWT habilitado, use `/api/token/` em vez deste.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPayload"
+      responses:
+        "200":
+          description: Login bem-sucedido (cookie de sessão definido)
+        "401":
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      operationId: logout
+      summary: Logout
+      tags: [Autenticação]
+      description: Encerra a sessão atual.
+      responses:
+        "200":
+          description: Sessão encerrada
+        "401":
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/token/:
+    post:
+      operationId: loginWithToken
+      summary: Login (JWT)
+      tags: [Autenticação]
+      description: |
+        Login via JWT. Retorna tokens `access` e `refresh`.
+        Esta é a rota principal usada pelo frontend.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPayload"
+      responses:
+        "200":
+          description: Tokens JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "401":
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/token/refresh/:
+    post:
+      operationId: refreshToken
+      summary: Renovar JWT
+      tags: [Autenticação]
+      description: |
+        Renova o `access_token` usando o `refresh_token`.
+        O frontend faz isso automaticamente quando o token expira (401).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenPayload"
+      responses:
+        "200":
+          description: Novos tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "401":
+          description: Refresh token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/register/:
+    post:
+      operationId: register
+      summary: Cadastro de usuário
+      tags: [Autenticação]
+      description: |
+        Cria uma nova conta. Pode retornar os tokens JWT automaticamente
+        (se o backend gerar após o registro) ou apenas o perfil criado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterPayload"
+      responses:
+        "201":
+          description: Conta criada com sucesso
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/UserProfile"
+                  - $ref: "#/components/schemas/AuthTokens"
+        "400":
+          description: "Dados invalidos (ex: email ja cadastrado, senhas nao conferem)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Error:
+      $ref: "shared.yml#/Error"
+    CsrfResponse:
+      $ref: "shared.yml#/CsrfResponse"
+
+    LoginPayload:
+      type: object
+      description: Credenciais de login.
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "joao@exemplo.com"
+        password:
+          type: string
+          format: password
+          example: "MinhaSenha123!"
+      example:
+        username: "joao@exemplo.com"
+        password: "MinhaSenha123!"
+
+    RegisterPayload:
+      type: object
+      description: Dados para cadastro de nova conta.
+      required:
+        - email
+        - password1
+        - password2
+      properties:
+        email:
+          type: string
+          format: email
+          example: "joao@exemplo.com"
+        password1:
+          type: string
+          format: password
+          description: Senha (mínimo 8 caracteres)
+          minLength: 8
+          example: "SenhaForte123!"
+        password2:
+          type: string
+          format: password
+          description: Confirmação da senha (deve ser igual a password1)
+          example: "SenhaForte123!"
+
+    AuthTokens:
+      type: object
+      description: Tokens JWT retornados após login ou refresh.
+      required:
+        - access
+      properties:
+        access:
+          type: string
+          description: Token JWT de acesso (curta duração)
+          example: "eyJhbGciOiJIUzI1NiIs..."
+        refresh:
+          type: string
+          nullable: true
+          description: Token JWT de refresh (longa duração)
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    RefreshTokenPayload:
+      type: object
+      description: Payload para renovar o access token.
+      required:
+        - refresh
+      properties:
+        refresh:
+          type: string
+          description: Refresh token JWT
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    UserProfile:
+      type: object
+      description: Dados públicos do usuário.
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "joao@exemplo.com"
+        first_name:
+          type: string
+          nullable: true
+          example: "João"
+        last_name:
+          type: string
+          nullable: true
+          example: "Silva"

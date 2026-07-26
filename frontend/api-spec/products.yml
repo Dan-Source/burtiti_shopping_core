@@ -1,0 +1,378 @@
+paths:
+  /api/products/:
+    get:
+      operationId: listProducts
+      summary: Listar / buscar produtos
+      tags: [Produtos]
+      description: |
+        Retorna produtos com paginação. Todos os parâmetros são opcionais.
+        Combinações de filtros funcionam como AND.
+      parameters:
+        - name: page
+          in: query
+          description: Número da página (começa em 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Itens por página
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Busca textual (nome, descrição, referência)
+          schema:
+            type: string
+            maxLength: 200
+        - name: category
+          in: query
+          description: Slug da categoria para filtro exato
+          schema:
+            type: string
+        - name: categories
+          in: query
+          description: Slugs de categorias separados por vírgula (OR)
+          schema:
+            type: string
+          example: "eletronicos,smartphones"
+        - name: min_price
+          in: query
+          description: Preço mínimo (incl_tax)
+          schema:
+            type: number
+            minimum: 0
+        - name: max_price
+          in: query
+          description: Preço máximo (incl_tax)
+          schema:
+            type: number
+            minimum: 0
+        - name: rating
+          in: query
+          description: Avaliação mínima (1-5)
+          schema:
+            type: number
+            minimum: 1
+            maximum: 5
+        - name: brands
+          in: query
+          description: Marcas separadas por vírgula (OR)
+          schema:
+            type: string
+          example: "samsung,xiaomi"
+        - name: in_stock
+          in: query
+          description: Apenas produtos com estoque > 0
+          schema:
+            type: boolean
+            default: false
+        - name: on_sale
+          in: query
+          description: Apenas produtos com desconto ativo
+          schema:
+            type: boolean
+            default: false
+        - name: ordering
+          in: query
+          description: |
+            Campo para ordenação. Prefixo `-` indica ordem decrescente.
+          schema:
+            type: string
+            enum:
+              - price
+              - -price
+              - created_at
+              - -created_at
+              - rating
+              - -rating
+              - title
+              - -title
+              - views
+              - -views
+            default: -created_at
+      responses:
+        "200":
+          description: Lista paginada de produtos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedProducts"
+        "400":
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/products/{id}/:
+    get:
+      operationId: retrieveProduct
+      summary: Detalhes do produto
+      tags: [Produtos]
+      description: Retorna informações completas de um produto específico.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID numérico do produto
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Dados completos do produto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDetail"
+        "404":
+          description: Produto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/categories/:
+    get:
+      operationId: listCategories
+      summary: Listar categorias
+      tags: [Produtos]
+      description: Retorna árvore de categorias disponíveis.
+      parameters:
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Lista de categorias
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryTree"
+
+components:
+  schemas:
+    Error:
+      $ref: "shared.yml#/Error"
+    Price:
+      $ref: "shared.yml#/Price"
+    Pagination:
+      $ref: "shared.yml#/Pagination"
+
+    Category:
+      type: object
+      description: Categoria associada ao produto.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: ID numérico da categoria
+          example: 5
+        name:
+          type: string
+          description: Nome da categoria
+          example: "Smartphones"
+        parent_id:
+          type: integer
+          nullable: true
+          description: ID da categoria pai (null se raiz)
+          example: 1
+
+    CategoryTree:
+      type: object
+      description: Categoria na hierarquia completa (para o filtro lateral).
+      required:
+        - id
+        - name
+        - slug
+        - count
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Eletrônicos"
+        slug:
+          type: string
+          example: "eletronicos"
+        description:
+          type: string
+          example: "Produtos eletrônicos em geral"
+        image:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://cdn.buriti.com/media/categories/eletronicos.jpg"
+        count:
+          type: integer
+          description: Quantidade de produtos nesta categoria
+          example: 128
+        children:
+          type: array
+          description: Subcategorias
+          items:
+            $ref: "#/components/schemas/CategoryTree"
+
+    ProductListItem:
+      type: object
+      description: |
+        Versão resumida do produto para cards na listagem.
+        Contém apenas os campos essenciais para renderização rápida.
+      required:
+        - id
+        - name
+        - price
+        - image
+        - stock
+        - category
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          nullable: true
+          description: Nome comercial / vitrine (pode conter formatação)
+          example: "Smartphone Galaxy S25 Ultra"
+        name:
+          type: string
+          description: Nome técnico do produto
+          example: "Smartphone Samsung Galaxy S25 Ultra 512GB"
+        slug:
+          type: string
+          description: Slug para URL amigável
+          example: "smartphone-samsung-galaxy-s25-ultra-512gb"
+        description:
+          type: string
+          nullable: true
+          description: Descrição curta (exibida no card em modo lista)
+          example: "O smartphone mais avançado da Samsung com câmera de 200MP."
+        upc:
+          type: string
+          nullable: true
+          description: Código de barras / GTIN
+          example: "7892514091237"
+        url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL absoluta do produto na API
+          example: "http://0.0.0.0:8000/api/products/1/"
+        price:
+          $ref: "#/components/schemas/Price"
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: URL da imagem principal (thumbnail)
+          example: "https://cdn.buriti.com/media/products/1/thumb.jpg"
+        discounted_price:
+          type: string
+          nullable: true
+          description: Preço com desconto (string decimal)
+          example: "999.00"
+        discount_percentage:
+          type: integer
+          nullable: true
+          description: Percentual de desconto
+          example: 16
+        stock:
+          type: integer
+          description: Quantidade em estoque
+          example: 50
+          minimum: 0
+        rating:
+          type: number
+          nullable: true
+          description: Avaliação média (0-5)
+          example: 4.7
+          minimum: 0
+          maximum: 5
+        reviews_count:
+          type: integer
+          nullable: true
+          description: Número total de avaliações
+          example: 234
+        category:
+          $ref: "#/components/schemas/Category"
+        is_new:
+          type: boolean
+          description: Flag indicando lançamento (últimos 30 dias)
+          example: true
+        is_on_sale:
+          type: boolean
+          description: Flag indicando produto em promoção
+          example: true
+        installments:
+          type: integer
+          nullable: true
+          description: Máximo de parcelas sem juros
+          example: 12
+        brand:
+          type: string
+          nullable: true
+          description: Marca / fabricante
+          example: "Samsung"
+
+    ProductDetail:
+      type: object
+      description: |
+        Versão completa do produto para a página de detalhes.
+        Inclui galeria de imagens e atributos dinâmicos.
+      allOf:
+        - $ref: "#/components/schemas/ProductListItem"
+        - type: object
+          required:
+            - images
+          properties:
+            images:
+              type: array
+              description: |
+                Galeria completa de imagens do produto.
+                A primeira imagem deve ser a principal (mesma URL de `image`).
+              items:
+                type: string
+                format: uri
+              example:
+                - "https://cdn.buriti.com/media/products/1/01.jpg"
+                - "https://cdn.buriti.com/media/products/1/02.jpg"
+                - "https://cdn.buriti.com/media/products/1/03.jpg"
+            attributes:
+              type: object
+              nullable: true
+              description: |
+                Atributos dinâmicos do produto (cor, tamanho, capacidade…).
+                Varia conforme o product_class.
+              additionalProperties: true
+              example:
+                cor: "Preto"
+                armazenamento: "512GB"
+                tela: '6.9" Dynamic AMOLED 2X'
+                processador: "Snapdragon 8 Gen 3"
+
+    PaginatedProducts:
+      type: object
+      description: Resposta paginada de produtos.
+      allOf:
+        - $ref: "#/components/schemas/Pagination"
+        - type: object
+          required:
+            - results
+          properties:
+            results:
+              type: array
+              description: Lista de produtos da página atual
+              items:
+                $ref: "#/components/schemas/ProductListItem"

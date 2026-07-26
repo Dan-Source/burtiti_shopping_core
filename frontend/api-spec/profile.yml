@@ -1,0 +1,104 @@
+paths:
+  /api/users/me/:
+    get:
+      operationId: getProfile
+      summary: Meus dados
+      tags: [Perfil]
+      description: Retorna os dados do usuário autenticado.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do perfil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    patch:
+      operationId: updateProfile
+      summary: Atualizar perfil
+      tags: [Perfil]
+      description: Atualiza dados do usuário autenticado.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfilePayload"
+      responses:
+        "200":
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Não autenticado
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+
+  schemas:
+    Error:
+      $ref: "shared.yml#/Error"
+
+    UserProfile:
+      type: object
+      description: Dados públicos do usuário.
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "joao@exemplo.com"
+        first_name:
+          type: string
+          nullable: true
+          example: "João"
+        last_name:
+          type: string
+          nullable: true
+          example: "Silva"
+
+    UpdateProfilePayload:
+      type: object
+      description: Campos atualizáveis do perfil.
+      properties:
+        first_name:
+          type: string
+          maxLength: 150
+          example: "João"
+        last_name:
+          type: string
+          maxLength: 150
+          example: "Silva"

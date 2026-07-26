@@ -1,0 +1,175 @@
+openapi: "3.0.3"
+info:
+  title: Buriti Shopping — API
+  description: |
+    API REST de e-commerce do Buriti Shopping. Segue o padrão django-oscar com
+    paginação, filtros e ordenação via query params.
+
+    ## Convenções gerais
+    - **Formato de preço**: string decimal (ex: `"1190.00"`), o frontend formata
+      como moeda (R$ 1.190,00).
+    - **Paginação**: page-based (`page` + `page_size`).
+    - **Filtros múltiplos**: valores separados por vírgula (`categories`, `brands`).
+    - **Ordenação**: prefixo `-` para descendente.
+    - **Autenticação**: JWT Bearer no header `Authorization` OU sessão via cookie
+      (django-oscar). O frontend usa JWT como padrão com fallback para sessão.
+    - **CSRF**: requisições mutantes (POST/PUT/PATCH/DELETE) autenticadas por
+      sessão exigem header `X-CSRF-Token` obtido via `GET /api/csrf/`.
+  version: "1.0.0"
+  contact:
+    name: Equipe Buriti Shopping
+
+servers:
+  - url: http://0.0.0.0:8000
+    description: Desenvolvimento local
+  - url: https://api.buritishopping.com.br
+    description: Produção
+
+tags:
+  - name: Produtos
+    description: Catálogo e busca de produtos
+  - name: Autenticação
+    description: Login, registro e gerenciamento de sessão
+  - name: Perfil
+    description: Dados da conta do usuário
+  - name: Endereços
+    description: Endereços de entrega e cobrança
+  - name: Carrinho
+    description: Gerenciamento do basket/carrinho
+  - name: Pedidos
+    description: Histórico e detalhes de pedidos
+  - name: Senha
+    description: Recuperação e redefinição de senha
+
+paths:
+  /api/products/:
+    $ref: "products.yml#/paths/~1api~1products~1"
+  /api/products/{id}/:
+    $ref: "products.yml#/paths/~1api~1products~1~1{id}~1"
+  /api/categories/:
+    $ref: "products.yml#/paths/~1api~1categories~1"
+
+  /api/csrf/:
+    $ref: "auth.yml#/paths/~1api~1csrf~1"
+  /api/login/:
+    $ref: "auth.yml#/paths/~1api~1login~1"
+  /api/token/:
+    $ref: "auth.yml#/paths/~1api~1token~1"
+  /api/token/refresh/:
+    $ref: "auth.yml#/paths/~1api~1token~1refresh~1"
+  /api/register/:
+    $ref: "auth.yml#/paths/~1api~1register~1"
+
+  /api/users/me/:
+    $ref: "profile.yml#/paths/~1api~1users~1me~1"
+
+  /api/useraddresses/:
+    $ref: "addresses.yml#/paths/~1api~1useraddresses~1"
+  /api/useraddresses/{id}/:
+    $ref: "addresses.yml#/paths/~1api~1useraddresses~1~1{id}~1"
+  /api/countries/:
+    $ref: "addresses.yml#/paths/~1api~1countries~1"
+
+  /api/password-reset/:
+    $ref: "password.yml#/paths/~1api~1password-reset~1"
+  /api/password-reset/confirm/:
+    $ref: "password.yml#/paths/~1api~1password-reset~1confirm~1"
+
+  /api/basket/:
+    $ref: "cart.yml#/paths/~1api~1basket~1"
+  /api/basket/add-product/:
+    $ref: "cart.yml#/paths/~1api~1basket~1add-product~1"
+  /api/basket/add-voucher/:
+    $ref: "cart.yml#/paths/~1api~1basket~1add-voucher~1"
+  /api/basket/shipping-methods/:
+    $ref: "cart.yml#/paths/~1api~1basket~1shipping-methods~1"
+  /api/basket/lines/{line_id}/:
+    $ref: "cart.yml#/paths/~1api~1basket~1lines~1{line_id}~1"
+  /api/checkout/:
+    $ref: "cart.yml#/paths/~1api~1checkout~1"
+  /api/checkout/payment-methods/:
+    $ref: "cart.yml#/paths/~1api~1checkout~1payment-methods~1"
+
+  /api/orders/:
+    $ref: "orders.yml#/paths/~1api~1orders~1"
+  /api/orders/{id}/:
+    $ref: "orders.yml#/paths/~1api~1orders~1~1{id}~1"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtido via `/api/token/` ou `/api/token/refresh/`.
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+      description: Cookie de sessão django-oscar (alternativa ao JWT).
+
+  schemas:
+    Error:
+      $ref: "shared.yml#/Error"
+    Price:
+      $ref: "shared.yml#/Price"
+    Pagination:
+      $ref: "shared.yml#/Pagination"
+    CsrfResponse:
+      $ref: "shared.yml#/CsrfResponse"
+
+    Category:
+      $ref: "products.yml#/components/schemas/Category"
+    CategoryTree:
+      $ref: "products.yml#/components/schemas/CategoryTree"
+    ProductListItem:
+      $ref: "products.yml#/components/schemas/ProductListItem"
+    ProductDetail:
+      $ref: "products.yml#/components/schemas/ProductDetail"
+    PaginatedProducts:
+      $ref: "products.yml#/components/schemas/PaginatedProducts"
+
+    LoginPayload:
+      $ref: "auth.yml#/components/schemas/LoginPayload"
+    RegisterPayload:
+      $ref: "auth.yml#/components/schemas/RegisterPayload"
+    AuthTokens:
+      $ref: "auth.yml#/components/schemas/AuthTokens"
+    RefreshTokenPayload:
+      $ref: "auth.yml#/components/schemas/RefreshTokenPayload"
+    UserProfile:
+      $ref: "auth.yml#/components/schemas/UserProfile"
+
+    UpdateProfilePayload:
+      $ref: "profile.yml#/components/schemas/UpdateProfilePayload"
+
+    UserAddress:
+      $ref: "addresses.yml#/components/schemas/UserAddress"
+    CreateAddressPayload:
+      $ref: "addresses.yml#/components/schemas/CreateAddressPayload"
+    Country:
+      $ref: "addresses.yml#/components/schemas/Country"
+
+    CartLine:
+      $ref: "cart.yml#/components/schemas/CartLine"
+    ProductItem:
+      $ref: "cart.yml#/components/schemas/ProductItem"
+    Cart:
+      $ref: "cart.yml#/components/schemas/Cart"
+    ShippingMethod:
+      $ref: "cart.yml#/components/schemas/ShippingMethod"
+    CheckoutPayload:
+      $ref: "cart.yml#/components/schemas/CheckoutPayload"
+    PaymentMethod:
+      $ref: "cart.yml#/components/schemas/PaymentMethod"
+    OrderLine:
+      $ref: "cart.yml#/components/schemas/OrderLine"
+    Order:
+      $ref: "cart.yml#/components/schemas/Order"
+
+    PaginatedOrders:
+      $ref: "orders.yml#/components/schemas/PaginatedOrders"
+
+security:
+  - bearerAuth: []
+  - sessionAuth: []

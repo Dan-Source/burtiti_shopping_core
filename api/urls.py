@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from api.basket.views import (
     AddProductView,
@@ -24,4 +24,5 @@ urlpatterns = [
     path("products/", ProductListAPIView.as_view(), name="api-product-list"),
     path("products/<int:id>/", ProductDetailAPIView.as_view(), name="api-product-detail"),
     path("categories/", CategoryTreeListAPIView.as_view(), name="api-category-list"),
+    path("user/", include("api.user.urls")),
 ]

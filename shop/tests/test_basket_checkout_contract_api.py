@@ -260,3 +260,203 @@ class BasketCheckoutContractApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("nao suportados", response.json().get("detail", ""))
+
+
+class UserAddressApiTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="address-user",
+            email="address@example.com",
+            password="Senha@123",
+        )
+        self.client.force_login(self.user)
+        self.valid_address = {
+            "full_name": "Maria Silva",
+            "cep": "77000-120",
+            "street": "Avenida JK",
+            "number": "123",
+            "complement": "Apto 10",
+            "bairro": "Centro",
+            "city": "Palmas",
+            "state": "TO",
+            "phone": "+55 63 99999-1234",
+        }
+
+    def test_list_addresses_empty(self):
+        response = self.client.get("/api/user/addresses/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+
+    def test_count_addresses_zero(self):
+        response = self.client.get("/api/user/addresses/count/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"count": 0})
+
+    def test_create_address_success(self):
+        response = self.client.post(
+            "/api/user/addresses/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertIn("id", data)
+        self.assertEqual(data["full_name"], "Maria Silva")
+        self.assertEqual(data["street"], "Avenida JK")
+        self.assertEqual(data["number"], "123")
+        self.assertEqual(data["bairro"], "Centro")
+        self.assertEqual(data["city"], "Palmas")
+        self.assertEqual(data["state"], "TO")
+        self.assertEqual(data["cep"], "77000-120")
+        self.assertEqual(data["complement"], "Apto 10")
+        self.assertEqual(data["phone"], "+5563999991234")
+
+    def test_create_address_missing_required_fields(self):
+        response = self.client.post(
+            "/api/user/addresses/",
+            data=json.dumps({"full_name": "Joao"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("detail", response.json())
+
+    def test_list_addresses_after_create(self):
+        self.client.post(
+            "/api/user/addresses/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        response = self.client.get("/api/user/addresses/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["full_name"], "Maria Silva")
+
+    def test_update_address(self):
+        create_resp = self.client.post(
+            "/api/user/addresses/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        addr_id = create_resp.json()["id"]
+
+        update_data = {**self.valid_address, "full_name": "Joao Souza", "number": "456"}
+        response = self.client.put(
+            f"/api/user/addresses/{addr_id}/",
+            data=json.dumps(update_data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["full_name"], "Joao Souza")
+        self.assertEqual(data["number"], "456")
+
+    def test_delete_address(self):
+        create_resp = self.client.post(
+            "/api/user/addresses/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        addr_id = create_resp.json()["id"]
+
+        response = self.client.delete(f"/api/user/addresses/{addr_id}/")
+        self.assertEqual(response.status_code, 204)
+
+        response = self.client.get("/api/user/addresses/")
+        self.assertEqual(response.json(), [])
+
+    def test_update_nonexistent_address_returns_404(self):
+        response = self.client.put(
+            "/api/user/addresses/999/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_nonexistent_address_returns_404(self):
+        response = self.client.delete("/api/user/addresses/999/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_checkout_with_saved_address_id(self):
+        create_resp = self.client.post(
+            "/api/user/addresses/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        addr_id = create_resp.json()["id"]
+
+        self._add_product()
+
+        response = self.client.post(
+            "/api/checkout/",
+            data=json.dumps({
+                "payment_method_code": "cash_on_delivery",
+                "shipping_address": addr_id,
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertIn("id", payload)
+
+    def _add_product(self):
+        from shop.tests.factories import ProductFactory
+        product = ProductFactory(product_class__requires_shipping=False)
+        response = self.client.post(
+            "/api/basket/add-product/",
+            data=json.dumps({"product_id": product.id, "quantity": 1}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        return response.json()
+
+    def test_checkout_with_saved_address_id_and_billing(self):
+        create_resp = self.client.post(
+            "/api/user/addresses/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        addr_id = create_resp.json()["id"]
+
+        self._add_product()
+
+        response = self.client.post(
+            "/api/checkout/",
+            data=json.dumps({
+                "payment_method_code": "cash_on_delivery",
+                "shipping_address": addr_id,
+                "billing_address": addr_id,
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_other_user_cannot_access_address(self):
+        create_resp = self.client.post(
+            "/api/user/addresses/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        addr_id = create_resp.json()["id"]
+
+        other = User.objects.create_user(
+            username="other-user",
+            email="other@example.com",
+            password="Senha@123",
+        )
+        self.client.force_login(other)
+
+        response = self.client.put(
+            f"/api/user/addresses/{addr_id}/",
+            data=json.dumps(self.valid_address),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.delete(f"/api/user/addresses/{addr_id}/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_unauthenticated_user_cannot_access(self):
+        self.client.logout()
+        response = self.client.get("/api/user/addresses/")
+        self.assertEqual(response.status_code, 403)

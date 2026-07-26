@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:15
+    image: postgres:15-alpine
     restart: on-failure
     ports:
       - "5432:5432"
@@ -12,77 +12,134 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - webnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buriti"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     restart: on-failure
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
     ports:
       - "6379:6379"
     networks:
       - webnet
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   web:
-    build: .
-    command: sh -c "uv run python manage.py migrate --noinput && uv run python manage.py collectstatic --noinput && uv run python manage.py compress --force && uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    command: >
+      sh -c "
+        uv run python manage.py migrate --noinput &&
+        uv run python manage.py collectstatic --noinput &&
+        uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 2
+      "
     volumes:
-      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     ports:
       - "8000:8000"
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_DB: buriti
-      POSTGRES_USER: buriti
-      POSTGRES_PASSWORD: buriti
-      POSTGRES_PORT: 5432
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-      REDIS_URL: redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=buriti
+      - POSTGRES_USER=buriti
+      - POSTGRES_PASSWORD=buriti
+      - POSTGRES_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - webnet
+
   worker:
-    build: .
-    command: uv run celery -A core worker -l info
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    command: uv run celery -A core worker -l info --concurrency=4
     volumes:
-      - .:/app
+      - media_volume:/app/media
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_DB: buriti
-      POSTGRES_USER: buriti
-      POSTGRES_PASSWORD: buriti
-      POSTGRES_PORT: 5432
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=buriti
+      - POSTGRES_USER=buriti
+      - POSTGRES_PASSWORD=buriti
+      - POSTGRES_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=False
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - webnet
 
   beat:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
     command: uv run celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    volumes:
-      - .:/app
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_DB: buriti
-      POSTGRES_USER: buriti
-      POSTGRES_PASSWORD: buriti
-      POSTGRES_PORT: 5432
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=buriti
+      - POSTGRES_USER=buriti
+      - POSTGRES_PASSWORD=buriti
+      - POSTGRES_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=False
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - webnet
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_API_URL=http://web:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
     networks:
       - webnet
 
 volumes:
   pgdata:
+  static_volume:
+  media_volume:
 
 networks:
   webnet:

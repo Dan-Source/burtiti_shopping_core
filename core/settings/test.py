@@ -9,5 +9,6 @@ HAYSTACK_CONNECTIONS["default"]["PATH"] = tempfile.mkdtemp(prefix="whoosh_test_"
 HAYSTACK_SIGNAL_PROCESSOR = "haystack.signals.BaseSignalProcessor"
 
 # Keep tests fast and deterministic.
+ALLOWED_HOSTS = ["*"]
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

@@ -1,0 +1,543 @@
+paths:
+  /api/basket/:
+    get:
+      operationId: getBasket
+      summary: Meu carrinho
+      tags: [Carrinho]
+      description: |
+        Retorna o carrinho (basket) do usuário autenticado ou da sessão atual.
+        Usuários anônimos têm um carrinho vinculado à sessão; ao fazer login,
+        o carrinho é migrado para a conta.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do carrinho
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /api/basket/add-product/:
+    post:
+      operationId: addToBasket
+      summary: Adicionar ao carrinho
+      tags: [Carrinho]
+      description: Adiciona um produto ao carrinho.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product_id
+                - quantity
+              properties:
+                product_id:
+                  type: integer
+                  description: ID do produto
+                  example: 1
+                quantity:
+                  type: integer
+                  description: Quantidade
+                  minimum: 1
+                  example: 1
+                options:
+                  type: object
+                  description: Opções do produto (variações, etc.)
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Carrinho atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "400":
+          description: Produto não encontrado ou sem estoque
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/basket/add-voucher/:
+    post:
+      operationId: addVoucher
+      summary: Adicionar cupom
+      tags: [Carrinho]
+      description: Aplica um cupom/voucher de desconto ao carrinho.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - voucher
+              properties:
+                voucher:
+                  type: string
+                  description: Código do cupom
+                  example: "DESCONTO10"
+      responses:
+        "200":
+          description: Cupom aplicado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "400":
+          description: Cupom inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/basket/shipping-methods/:
+    get:
+      operationId: getShippingMethods
+      summary: Métodos de entrega
+      tags: [Carrinho]
+      description: Retorna as opções de frete disponíveis para o carrinho atual.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Métodos de frete disponíveis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShippingMethod"
+
+  /api/basket/lines/{line_id}/:
+    patch:
+      operationId: updateBasketLine
+      summary: Atualizar item do carrinho
+      tags: [Carrinho]
+      description: Altera a quantidade de um item no carrinho.
+      parameters:
+        - name: line_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Nova quantidade. Se for 0, o item é removido.
+                  example: 2
+      responses:
+        "200":
+          description: Carrinho atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+    delete:
+      operationId: removeBasketLine
+      summary: Remover item do carrinho
+      tags: [Carrinho]
+      description: Remove um item do carrinho.
+      parameters:
+        - name: line_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Carrinho atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /api/checkout/:
+    post:
+      operationId: checkout
+      summary: Finalizar compra
+      tags: [Pedidos]
+      description: |
+        Converte o carrinho em um pedido. Deve ser chamado após definir
+        endereço e método de entrega.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutPayload"
+      responses:
+        "201":
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Erro de validação (carrinho vazio, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/checkout/payment-methods/:
+    get:
+      operationId: getCheckoutPaymentMethods
+      summary: Métodos de pagamento do checkout
+      tags: [Pedidos]
+      description: |
+        Retorna os métodos de pagamento habilitados para o carrinho/sessão atual.
+        Exemplo de códigos esperados: `pix`, `cash_on_delivery`, `credit_card`.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Métodos de pagamento disponíveis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentMethod"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+
+  schemas:
+    Error:
+      $ref: "shared.yml#/Error"
+    Price:
+      $ref: "shared.yml#/Price"
+
+    CartLine:
+      type: object
+      description: Linha (item) do carrinho.
+      required:
+        - id
+        - product
+        - quantity
+      properties:
+        id:
+          type: integer
+          example: 1
+        product:
+          $ref: "#/components/schemas/ProductItem"
+        quantity:
+          type: integer
+          example: 2
+        price_incl_tax:
+          type: string
+          nullable: true
+          description: Preço total da linha com imposto
+          example: "2380.00"
+        price_excl_tax:
+          type: string
+          nullable: true
+          description: Preço total da linha sem imposto
+          example: "2000.00"
+
+    ProductItem:
+      type: object
+      description: Versão resumida do produto para uso no carrinho.
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          nullable: true
+          example: "Smartphone Galaxy S25 Ultra"
+        name:
+          type: string
+          example: "Smartphone Samsung Galaxy S25 Ultra 512GB"
+        slug:
+          type: string
+          example: "smartphone-samsung-galaxy-s25-ultra-512gb"
+        image:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://cdn.buriti.com/media/products/1/thumb.jpg"
+        price:
+          $ref: "#/components/schemas/Price"
+        stock:
+          type: integer
+          example: 50
+          minimum: 0
+        is_on_sale:
+          type: boolean
+          example: true
+
+    Cart:
+      type: object
+      description: Carrinho de compras (basket).
+      required:
+        - id
+        - lines
+      properties:
+        id:
+          type: integer
+          example: 1
+        owner:
+          type: integer
+          nullable: true
+          description: ID do usuário dono (null se anônimo)
+          example: 1
+        total_incl_tax:
+          type: string
+          nullable: true
+          description: Total do carrinho com imposto
+          example: "4760.00"
+        total_excl_tax:
+          type: string
+          nullable: true
+          description: Total do carrinho sem imposto
+          example: "4000.00"
+        lines:
+          type: array
+          description: Itens do carrinho
+          items:
+            $ref: "#/components/schemas/CartLine"
+
+    ShippingMethod:
+      type: object
+      description: Opção de frete disponível.
+      properties:
+        code:
+          type: string
+          description: Código do método
+          example: "pac"
+        name:
+          type: string
+          description: Nome legível
+          example: "PAC"
+        price_incl_tax:
+          type: string
+          nullable: true
+          description: Valor do frete com imposto
+          example: "25.90"
+
+    CheckoutPayload:
+      type: object
+      description: Dados para finalizar a compra.
+      properties:
+        shipping_address:
+          oneOf:
+            - type: integer
+              description: ID de endereço salvo
+              example: 12
+            - $ref: "#/components/schemas/InlineCheckoutAddress"
+          description: Endereço de entrega (ID de endereço salvo ou objeto inline)
+        billing_address:
+          oneOf:
+            - type: integer
+              description: ID de endereço salvo
+              example: 12
+            - $ref: "#/components/schemas/InlineCheckoutAddress"
+          description: Endereço de cobrança (ID de endereço salvo ou objeto inline)
+        shipping_method_code:
+          type: string
+          description: Código do método de entrega selecionado
+          example: "pac"
+        payment_method_code:
+          type: string
+          description: Código do método de pagamento
+          example: "credit_card"
+        guest_email:
+          type: string
+          format: email
+          nullable: true
+          description: Email do comprador (para checkout sem login)
+
+    InlineCheckoutAddress:
+      type: object
+      description: Endereço inline para finalização de compra.
+      required:
+        - first_name
+        - last_name
+        - line1
+        - line4
+        - postcode
+        - country
+      properties:
+        first_name:
+          type: string
+          example: "João"
+        last_name:
+          type: string
+          example: "Silva"
+        line1:
+          type: string
+          example: "Rua das Flores"
+        line2:
+          type: string
+          nullable: true
+          example: "123"
+        line3:
+          type: string
+          nullable: true
+          example: "Apto 42"
+        line4:
+          type: string
+          example: "Centro"
+        postcode:
+          type: string
+          example: "01310-100"
+        country:
+          type: string
+          description: Código ISO alpha-2
+          example: "BR"
+        phone_number:
+          type: string
+          nullable: true
+          example: "(11) 99999-8888"
+
+    PaymentMethod:
+      type: object
+      description: Método de pagamento disponível no checkout.
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: Código do método de pagamento
+          example: "pix"
+        name:
+          type: string
+          nullable: true
+          description: Nome legível
+          example: "PIX"
+        label:
+          type: string
+          nullable: true
+          description: Label alternativa para exibição
+          example: "Pagar com PIX"
+        description:
+          type: string
+          nullable: true
+          description: Descrição opcional para UI
+          example: "Pagamento instantâneo por QR Code"
+
+    OrderLine:
+      type: object
+      description: Item de um pedido.
+      required:
+        - id
+        - product
+        - quantity
+      properties:
+        id:
+          type: integer
+          example: 1
+        product:
+          $ref: "#/components/schemas/ProductItem"
+        quantity:
+          type: integer
+          example: 1
+        line_price_incl_tax:
+          type: string
+          nullable: true
+          description: Preço total da linha no pedido
+          example: "1190.00"
+
+    Order:
+      type: object
+      description: Pedido confirmado.
+      required:
+        - id
+        - status
+      properties:
+        id:
+          type: integer
+          example: 1
+        number:
+          type: string
+          nullable: true
+          description: Número do pedido (legível para o cliente)
+          example: "OSCAR-2025-000001"
+        status:
+          type: string
+          description: Status atual do pedido
+          example: "Processing"
+        payment_status:
+          type: string
+          nullable: true
+          description: |
+            Status de pagamento para fluxos assíncronos (ex.: PIX).
+            Valores comuns: `pending`, `paid`, `expired`.
+          example: "pending"
+        date_placed:
+          type: string
+          format: date-time
+          nullable: true
+          description: Data de realização
+          example: "2025-06-15T14:30:00Z"
+        total_incl_tax:
+          type: string
+          nullable: true
+          description: Total do pedido com imposto
+          example: "1190.00"
+        pix_qr_code_image:
+          type: string
+          format: uri
+          nullable: true
+          description: URL ou data URI da imagem do QR Code PIX
+          example: "https://api.buritishopping.com.br/media/pix/qr/order-1.png"
+        pix_qr_code:
+          type: string
+          nullable: true
+          description: Conteúdo bruto do QR Code (quando aplicável)
+          example: "00020101021226860014br.gov.bcb.pix..."
+        pix_copy_paste:
+          type: string
+          nullable: true
+          description: Chave/linha digitável copia e cola do PIX
+          example: "00020101021226860014br.gov.bcb.pix..."
+        pix_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Data/hora de expiração do pagamento PIX
+          example: "2026-07-03T22:00:00Z"
+        lines:
+          type: array
+          nullable: true
+          description: Itens do pedido
+          items:
+            $ref: "#/components/schemas/OrderLine"

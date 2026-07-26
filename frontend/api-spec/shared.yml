@@ -1,0 +1,82 @@
+# ── COMPARTILHADOS ──────────────────────────────────────────────────────
+# Schemas usados por múltiplos domínios.
+# Referenciados via $ref no openapi.yml principal.
+
+Error:
+  type: object
+  required:
+    - detail
+  properties:
+    detail:
+      type: string
+      description: Mensagem de erro legível
+      example: "Produto não encontrado."
+    code:
+      type: string
+      description: Código do erro (opcional)
+      example: "not_found"
+
+CsrfResponse:
+  type: object
+  description: Resposta do endpoint de CSRF.
+  properties:
+    csrfToken:
+      type: string
+      description: Token CSRF
+      example: "abc123def456"
+    csrf:
+      type: string
+      description: Alias para csrfToken
+      example: "abc123def456"
+    token:
+      type: string
+      description: Alias para csrfToken
+      example: "abc123def456"
+
+Price:
+  type: object
+  description: Preço do produto nos formatos com e sem imposto.
+  required:
+    - currency
+    - excl_tax
+    - incl_tax
+  properties:
+    currency:
+      type: string
+      description: Código ISO da moeda
+      example: "BRL"
+      minLength: 3
+      maxLength: 3
+    excl_tax:
+      type: string
+      description: Preço sem imposto (string decimal)
+      example: "1000.00"
+    incl_tax:
+      type: string
+      description: Preço com imposto (string decimal)
+      example: "1190.00"
+
+Pagination:
+  type: object
+  description: Metadados de paginação (padrão Oscar).
+  required:
+    - count
+    - next
+    - previous
+  properties:
+    count:
+      type: integer
+      description: Total de itens (não apenas da página atual)
+      example: 1247
+    next:
+      type: string
+      format: uri
+      nullable: true
+      description: URL da próxima página (null se última)
+      example: "http://0.0.0.0:8000/api/products/?page=3&page_size=20"
+    previous:
+      type: string
+      format: uri
+      nullable: true
+      description: URL da página anterior (null se primeira)
+      example: "http://0.0.0.0:8000/api/products/?page=1&page_size=20"

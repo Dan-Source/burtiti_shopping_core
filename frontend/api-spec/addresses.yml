@@ -1,0 +1,307 @@
+paths:
+  /api/useraddresses/:
+    get:
+      operationId: listAddresses
+      summary: Listar endereços
+      tags: [Endereços]
+      description: Retorna os endereços salvos do usuário.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Lista de endereços
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserAddress"
+        "401":
+          description: Não autenticado
+
+    post:
+      operationId: createAddress
+      summary: Criar endereço
+      tags: [Endereços]
+      description: Adiciona um novo endereço à conta do usuário.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAddressPayload"
+      responses:
+        "201":
+          description: Endereço criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAddress"
+        "400":
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/useraddresses/{id}/:
+    get:
+      operationId: getAddress
+      summary: Detalhes do endereço
+      tags: [Endereços]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do endereço
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAddress"
+        "404":
+          description: Endereço não encontrado
+
+    put:
+      operationId: updateAddress
+      summary: Atualizar endereço
+      tags: [Endereços]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAddressPayload"
+      responses:
+        "200":
+          description: Endereço atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAddress"
+        "400":
+          description: Dados inválidos
+        "404":
+          description: Endereço não encontrado
+
+    delete:
+      operationId: deleteAddress
+      summary: Remover endereço
+      tags: [Endereços]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "204":
+          description: Endereço removido
+        "404":
+          description: Endereço não encontrado
+
+  /api/countries/:
+    get:
+      operationId: listCountries
+      summary: Listar países
+      tags: [Endereços]
+      description: Retorna lista de países disponíveis para endereços.
+      responses:
+        "200":
+          description: Lista de países
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Country"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+
+  schemas:
+    Error:
+      $ref: "shared.yml#/Error"
+
+    UserAddress:
+      type: object
+      description: Endereço salvo do usuário.
+      required:
+        - id
+        - line1
+        - line4
+        - postcode
+        - city
+        - state
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          nullable: true
+          description: "Apelido do endereco (ex: Casa, Trabalho)"
+          example: "Casa"
+        first_name:
+          type: string
+          example: "João"
+        last_name:
+          type: string
+          example: "Silva"
+        line1:
+          type: string
+          description: Logradouro (rua, avenida, etc.)
+          example: "Rua das Flores"
+        line2:
+          type: string
+          nullable: true
+          description: Numero
+          example: "123"
+        line3:
+          type: string
+          nullable: true
+          description: Complemento (apto, bloco, etc.)
+          example: "Apto 42"
+        line4:
+          type: string
+          description: Bairro
+          example: "Centro"
+        city:
+          type: string
+          description: Cidade
+          example: "Sao Paulo"
+        state:
+          type: string
+          description: UF (sigla do estado com 2 letras)
+          example: "SP"
+        postcode:
+          type: string
+          description: CEP (somente digitos ou formatado XXXXX-XXX)
+          example: "01310-100"
+        country:
+          type: object
+          properties:
+            iso_3166_1_a2:
+              type: string
+              example: "BR"
+            printable_name:
+              type: string
+              example: "Brasil"
+        phone_number:
+          type: string
+          nullable: true
+          description: "Telefone com DDD (11 digitos, so numeros. ex: 63999990001)"
+          example: "63999990001"
+        is_default_for_shipping:
+          type: boolean
+          default: false
+        is_default_for_billing:
+          type: boolean
+          default: false
+        notes:
+          type: string
+          nullable: true
+          example: "Deixar com o porteiro"
+
+    CreateAddressPayload:
+      type: object
+      description: Payload para criar/atualizar endereço.
+      required:
+        - first_name
+        - last_name
+        - line1
+        - line4
+        - city
+        - state
+        - postcode
+      properties:
+        first_name:
+          type: string
+          example: "João"
+        last_name:
+          type: string
+          example: "Silva"
+        line1:
+          type: string
+          description: Logradouro (rua, avenida, etc.)
+          example: "Rua das Flores"
+        line2:
+          type: string
+          description: Numero
+          example: "123"
+        line3:
+          type: string
+          description: Complemento (apto, bloco, etc.)
+          example: "Apto 42"
+        line4:
+          type: string
+          description: Bairro
+          example: "Centro"
+        city:
+          type: string
+          description: Cidade
+          example: "Sao Paulo"
+        state:
+          type: string
+          description: UF (sigla do estado com 2 letras)
+          example: "SP"
+        postcode:
+          type: string
+          description: CEP (somente digitos ou formatado XXXXX-XXX)
+          example: "01310-100"
+        phone_number:
+          type: string
+          description: "Telefone com DDD (11 digitos, so numeros. ex: 63999990001)"
+          example: "63999990001"
+        title:
+          type: string
+          example: "Casa"
+        is_default_for_shipping:
+          type: boolean
+          default: false
+        is_default_for_billing:
+          type: boolean
+          default: false
+
+    Country:
+      type: object
+      description: País para seleção em endereços.
+      properties:
+        iso_3166_1_a2:
+          type: string
+          description: Código ISO alpha-2
+          example: "BR"
+        printable_name:
+          type: string
+          description: Nome legível
+          example: "Brasil"

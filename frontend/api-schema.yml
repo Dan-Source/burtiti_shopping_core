@@ -1,0 +1,1629 @@
+openapi: "3.0.3"
+info:
+  title: Buriti Shopping — API
+  description: |
+    API REST de e-commerce do Buriti Shopping. Segue o padrão django-oscar com
+    paginação, filtros e ordenação via query params.
+
+    ## Convenções gerais
+    - **Formato de preço**: string decimal (ex: `"1190.00"`), o frontend formata
+      como moeda (R$ 1.190,00).
+    - **Paginação**: page-based (`page` + `page_size`).
+    - **Filtros múltiplos**: valores separados por vírgula (`categories`, `brands`).
+    - **Ordenação**: prefixo `-` para descendente.
+    - **Autenticação**: JWT Bearer no header `Authorization` OU sessão via cookie
+      (django-oscar). O frontend usa JWT como padrão com fallback para sessão.
+    - **CSRF**: requisições mutantes (POST/PUT/PATCH/DELETE) autenticadas por
+      sessão exigem header `X-CSRF-Token` obtido via `GET /api/csrf/`.
+  version: "1.0.0"
+  contact:
+    name: Equipe Buriti Shopping
+
+servers:
+  - url: http://0.0.0.0:8000
+    description: Desenvolvimento local
+  - url: https://api.buritishopping.com.br
+    description: Produção
+
+tags:
+  - name: Produtos
+    description: Catálogo e busca de produtos
+  - name: Autenticação
+    description: Login, registro e gerenciamento de sessão
+  - name: Perfil
+    description: Dados da conta do usuário
+  - name: Endereços
+    description: Endereços de entrega e cobrança
+  - name: Carrinho
+    description: Gerenciamento do basket/carrinho
+  - name: Pedidos
+    description: Histórico e detalhes de pedidos
+  - name: Senha
+    description: Recuperação e redefinição de senha
+
+paths:
+  # ══════════════════════════════════════════════════════════════════════
+  #  PRODUTOS
+  # ══════════════════════════════════════════════════════════════════════
+  /api/products/:
+    get:
+      operationId: listProducts
+      summary: Listar / buscar produtos
+      tags: [Produtos]
+      description: |
+        Retorna produtos com paginação. Todos os parâmetros são opcionais.
+        Combinações de filtros funcionam como AND.
+      parameters:
+        - name: page
+          in: query
+          description: Número da página (começa em 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Itens por página
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Busca textual (nome, descrição, referência)
+          schema:
+            type: string
+            maxLength: 200
+        - name: category
+          in: query
+          description: Slug da categoria para filtro exato
+          schema:
+            type: string
+        - name: categories
+          in: query
+          description: Slugs de categorias separados por vírgula (OR)
+          schema:
+            type: string
+          example: "eletronicos,smartphones"
+        - name: min_price
+          in: query
+          description: Preço mínimo (incl_tax)
+          schema:
+            type: number
+            minimum: 0
+        - name: max_price
+          in: query
+          description: Preço máximo (incl_tax)
+          schema:
+            type: number
+            minimum: 0
+        - name: rating
+          in: query
+          description: Avaliação mínima (1-5)
+          schema:
+            type: number
+            minimum: 1
+            maximum: 5
+        - name: brands
+          in: query
+          description: Marcas separadas por vírgula (OR)
+          schema:
+            type: string
+          example: "samsung,xiaomi"
+        - name: in_stock
+          in: query
+          description: Apenas produtos com estoque > 0
+          schema:
+            type: boolean
+            default: false
+        - name: on_sale
+          in: query
+          description: Apenas produtos com desconto ativo
+          schema:
+            type: boolean
+            default: false
+        - name: ordering
+          in: query
+          description: |
+            Campo para ordenação. Prefixo `-` indica ordem decrescente.
+          schema:
+            type: string
+            enum:
+              - price
+              - -price
+              - created_at
+              - -created_at
+              - rating
+              - -rating
+              - title
+              - -title
+              - views
+              - -views
+            default: -created_at
+      responses:
+        "200":
+          description: Lista paginada de produtos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedProducts"
+        "400":
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/products/{id}/:
+    get:
+      operationId: retrieveProduct
+      summary: Detalhes do produto
+      tags: [Produtos]
+      description: Retorna informações completas de um produto específico.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID numérico do produto
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Dados completos do produto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDetail"
+        "404":
+          description: Produto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  CATEGORIAS
+  # ══════════════════════════════════════════════════════════════════════
+  /api/categories/:
+    get:
+      operationId: listCategories
+      summary: Listar categorias
+      tags: [Produtos]
+      description: Retorna árvore de categorias disponíveis.
+      parameters:
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Lista de categorias
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryTree"
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  AUTENTICAÇÃO
+  # ══════════════════════════════════════════════════════════════════════
+
+  /api/csrf/:
+    get:
+      operationId: getCsrfToken
+      summary: Obter token CSRF
+      tags: [Autenticação]
+      description: |
+        Retorna o token CSRF necessário para requisições mutantes autenticadas
+        por sessão (não-JWT). O token deve ser enviado no header `X-CSRF-Token`.
+      responses:
+        "200":
+          description: Token CSRF
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CsrfResponse"
+
+  /api/login/:
+    post:
+      operationId: login
+      summary: Login (sessão)
+      tags: [Autenticação]
+      description: |
+        Login via sessão django-oscar. Retorna cookie de sessão.
+        Se o backend tiver JWT habilitado, use `/api/token/` em vez deste.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPayload"
+      responses:
+        "200":
+          description: Login bem-sucedido (cookie de sessão definido)
+        "401":
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      operationId: logout
+      summary: Logout
+      tags: [Autenticação]
+      description: Encerra a sessão atual.
+      responses:
+        "200":
+          description: Sessão encerrada
+        "401":
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/token/:
+    post:
+      operationId: loginWithToken
+      summary: Login (JWT)
+      tags: [Autenticação]
+      description: |
+        Login via JWT. Retorna tokens `access` e `refresh`.
+        Esta é a rota principal usada pelo frontend.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPayload"
+      responses:
+        "200":
+          description: Tokens JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "401":
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/token/refresh/:
+    post:
+      operationId: refreshToken
+      summary: Renovar JWT
+      tags: [Autenticação]
+      description: |
+        Renova o `access_token` usando o `refresh_token`.
+        O frontend faz isso automaticamente quando o token expira (401).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenPayload"
+      responses:
+        "200":
+          description: Novos tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "401":
+          description: Refresh token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/register/:
+    post:
+      operationId: register
+      summary: Cadastro de usuário
+      tags: [Autenticação]
+      description: |
+        Cria uma nova conta. Pode retornar os tokens JWT automaticamente
+        (se o backend gerar após o registro) ou apenas o perfil criado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterPayload"
+      responses:
+        "201":
+          description: Conta criada com sucesso
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/UserProfile"
+                  - $ref: "#/components/schemas/AuthTokens"
+        "400":
+          description: "Dados invalidos (ex: email ja cadastrado, senhas nao conferem)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  PERFIL
+  # ══════════════════════════════════════════════════════════════════════
+
+  /api/users/me/:
+    get:
+      operationId: getProfile
+      summary: Meus dados
+      tags: [Perfil]
+      description: Retorna os dados do usuário autenticado.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do perfil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    patch:
+      operationId: updateProfile
+      summary: Atualizar perfil
+      tags: [Perfil]
+      description: Atualiza dados do usuário autenticado.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfilePayload"
+      responses:
+        "200":
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Não autenticado
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  ENDEREÇOS
+  # ══════════════════════════════════════════════════════════════════════
+
+  /api/useraddresses/:
+    get:
+      operationId: listAddresses
+      summary: Listar endereços
+      tags: [Endereços]
+      description: Retorna os endereços salvos do usuário.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Lista de endereços
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserAddress"
+        "401":
+          description: Não autenticado
+
+    post:
+      operationId: createAddress
+      summary: Criar endereço
+      tags: [Endereços]
+      description: Adiciona um novo endereço à conta do usuário.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAddressPayload"
+      responses:
+        "201":
+          description: Endereço criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAddress"
+        "400":
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/useraddresses/{id}/:
+    get:
+      operationId: getAddress
+      summary: Detalhes do endereço
+      tags: [Endereços]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do endereço
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAddress"
+        "404":
+          description: Endereço não encontrado
+
+    put:
+      operationId: updateAddress
+      summary: Atualizar endereço
+      tags: [Endereços]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAddressPayload"
+      responses:
+        "200":
+          description: Endereço atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAddress"
+        "400":
+          description: Dados inválidos
+        "404":
+          description: Endereço não encontrado
+
+    delete:
+      operationId: deleteAddress
+      summary: Remover endereço
+      tags: [Endereços]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "204":
+          description: Endereço removido
+        "404":
+          description: Endereço não encontrado
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  RECUPERAÇÃO DE SENHA
+  # ══════════════════════════════════════════════════════════════════════
+
+  /api/password-reset/:
+    post:
+      operationId: requestPasswordReset
+      summary: Solicitar redefinição de senha
+      tags: [Senha]
+      description: |
+        Envia email com link para redefinição de senha.
+        Não retorna erro se o email não existir (segurança).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "usuario@exemplo.com"
+      responses:
+        "200":
+          description: Instruções enviadas (se o email existir)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Instruções de recuperação enviadas para o email informado."
+
+  /api/password-reset/confirm/:
+    post:
+      operationId: confirmPasswordReset
+      summary: Confirmar redefinição de senha
+      tags: [Senha]
+      description: |
+        Redefine a senha usando o token recebido por email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - password
+              properties:
+                token:
+                  type: string
+                  description: Token recebido por email
+                  example: "Mg1d3f5g7h8j9k0"
+                password:
+                  type: string
+                  description: Nova senha
+                  minLength: 8
+                  example: "NovaSenha123!"
+      responses:
+        "200":
+          description: Senha redefinida com sucesso
+        "400":
+          description: Token inválido/expirado ou senha fraca
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  CARRINHO / BASKET
+  # ══════════════════════════════════════════════════════════════════════
+
+  /api/basket/:
+    get:
+      operationId: getBasket
+      summary: Meu carrinho
+      tags: [Carrinho]
+      description: |
+        Retorna o carrinho (basket) do usuário autenticado ou da sessão atual.
+        Usuários anônimos têm um carrinho vinculado à sessão; ao fazer login,
+        o carrinho é migrado para a conta.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do carrinho
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /api/basket/add-product/:
+    post:
+      operationId: addToBasket
+      summary: Adicionar ao carrinho
+      tags: [Carrinho]
+      description: Adiciona um produto ao carrinho.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product_id
+                - quantity
+              properties:
+                product_id:
+                  type: integer
+                  description: ID do produto
+                  example: 1
+                quantity:
+                  type: integer
+                  description: Quantidade
+                  minimum: 1
+                  example: 1
+                options:
+                  type: object
+                  description: Opções do produto (variações, etc.)
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Carrinho atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "400":
+          description: Produto não encontrado ou sem estoque
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/basket/add-voucher/:
+    post:
+      operationId: addVoucher
+      summary: Adicionar cupom
+      tags: [Carrinho]
+      description: Aplica um cupom/voucher de desconto ao carrinho.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - voucher
+              properties:
+                voucher:
+                  type: string
+                  description: Código do cupom
+                  example: "DESCONTO10"
+      responses:
+        "200":
+          description: Cupom aplicado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "400":
+          description: Cupom inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/basket/shipping-methods/:
+    get:
+      operationId: getShippingMethods
+      summary: Métodos de entrega
+      tags: [Carrinho]
+      description: Retorna as opções de frete disponíveis para o carrinho atual.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Métodos de frete disponíveis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShippingMethod"
+
+  /api/basket/lines/{line_id}/:
+    patch:
+      operationId: updateBasketLine
+      summary: Atualizar item do carrinho
+      tags: [Carrinho]
+      description: Altera a quantidade de um item no carrinho.
+      parameters:
+        - name: line_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Nova quantidade. Se for 0, o item é removido.
+                  example: 2
+      responses:
+        "200":
+          description: Carrinho atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+    delete:
+      operationId: removeBasketLine
+      summary: Remover item do carrinho
+      tags: [Carrinho]
+      description: Remove um item do carrinho.
+      parameters:
+        - name: line_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Carrinho atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  CHECKOUT
+  # ══════════════════════════════════════════════════════════════════════
+
+  /api/checkout/:
+    post:
+      operationId: checkout
+      summary: Finalizar compra
+      tags: [Pedidos]
+      description: |
+        Converte o carrinho em um pedido. Deve ser chamado após definir
+        endereço e método de entrega.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutPayload"
+      responses:
+        "201":
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Erro de validação (carrinho vazio, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  PEDIDOS
+  # ══════════════════════════════════════════════════════════════════════
+
+  /api/orders/:
+    get:
+      operationId: listOrders
+      summary: Listar pedidos
+      tags: [Pedidos]
+      description: Retorna o histórico de pedidos do usuário autenticado.
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Lista paginada de pedidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedOrders"
+        "401":
+          description: Não autenticado
+
+  /api/orders/{id}/:
+    get:
+      operationId: retrieveOrder
+      summary: Detalhes do pedido
+      tags: [Pedidos]
+      description: Retorna informações completas de um pedido específico.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do pedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Pedido não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  PAÍSES (para endereços)
+  # ══════════════════════════════════════════════════════════════════════
+
+  /api/countries/:
+    get:
+      operationId: listCountries
+      summary: Listar países
+      tags: [Endereços]
+      description: Retorna lista de países disponíveis para endereços.
+      responses:
+        "200":
+          description: Lista de países
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Country"
+
+components:
+  schemas:
+    # ── ERRO ───────────────────────────────────────────────────────────
+    Error:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Mensagem de erro legível
+          example: "Produto não encontrado."
+        code:
+          type: string
+          description: Código do erro (opcional)
+          example: "not_found"
+
+    # ── CSRF ────────────────────────────────────────────────────────────
+    CsrfResponse:
+      type: object
+      description: Resposta do endpoint de CSRF.
+      properties:
+        csrfToken:
+          type: string
+          description: Token CSRF
+          example: "abc123def456"
+        csrf:
+          type: string
+          description: Alias para csrfToken
+          example: "abc123def456"
+        token:
+          type: string
+          description: Alias para csrfToken
+          example: "abc123def456"
+
+    # ── AUTENTICAÇÃO ────────────────────────────────────────────────────
+    LoginPayload:
+      type: object
+      description: Credenciais de login.
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "joao@exemplo.com"
+        password:
+          type: string
+          format: password
+          example: "MinhaSenha123!"
+      example:
+        username: "joao@exemplo.com"
+        password: "MinhaSenha123!"
+
+    RegisterPayload:
+      type: object
+      description: Dados para cadastro de nova conta.
+      required:
+        - email
+        - password1
+        - password2
+      properties:
+        email:
+          type: string
+          format: email
+          example: "joao@exemplo.com"
+        password1:
+          type: string
+          format: password
+          description: Senha (mínimo 8 caracteres)
+          minLength: 8
+          example: "SenhaForte123!"
+        password2:
+          type: string
+          format: password
+          description: Confirmação da senha (deve ser igual a password1)
+          example: "SenhaForte123!"
+
+    AuthTokens:
+      type: object
+      description: Tokens JWT retornados após login ou refresh.
+      required:
+        - access
+      properties:
+        access:
+          type: string
+          description: Token JWT de acesso (curta duração)
+          example: "eyJhbGciOiJIUzI1NiIs..."
+        refresh:
+          type: string
+          nullable: true
+          description: Token JWT de refresh (longa duração)
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    RefreshTokenPayload:
+      type: object
+      description: Payload para renovar o access token.
+      required:
+        - refresh
+      properties:
+        refresh:
+          type: string
+          description: Refresh token JWT
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    # ── PERFIL ──────────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      description: Dados públicos do usuário.
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "joao@exemplo.com"
+        first_name:
+          type: string
+          nullable: true
+          example: "João"
+        last_name:
+          type: string
+          nullable: true
+          example: "Silva"
+
+    UpdateProfilePayload:
+      type: object
+      description: Campos atualizáveis do perfil.
+      properties:
+        first_name:
+          type: string
+          maxLength: 150
+          example: "João"
+        last_name:
+          type: string
+          maxLength: 150
+          example: "Silva"
+
+    # ── ENDEREÇO ────────────────────────────────────────────────────────
+    UserAddress:
+      type: object
+      description: Endereço salvo do usuário.
+      required:
+        - id
+        - line1
+        - line4
+        - postcode
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          nullable: true
+          description: "Apelido do endereco (ex: Casa, Trabalho)"
+          example: "Casa"
+        first_name:
+          type: string
+          example: "João"
+        last_name:
+          type: string
+          example: "Silva"
+        line1:
+          type: string
+          description: Logradouro
+          example: "Rua das Flores"
+        line2:
+          type: string
+          nullable: true
+          description: Número
+          example: "123"
+        line3:
+          type: string
+          nullable: true
+          description: Complemento
+          example: "Apto 42"
+        line4:
+          type: string
+          description: Bairro
+          example: "Centro"
+        postcode:
+          type: string
+          example: "01310-100"
+        country:
+          type: object
+          properties:
+            iso_3166_1_a2:
+              type: string
+              example: "BR"
+            printable_name:
+              type: string
+              example: "Brasil"
+        phone_number:
+          type: string
+          nullable: true
+          example: "(11) 99999-8888"
+        is_default_for_shipping:
+          type: boolean
+          default: false
+        is_default_for_billing:
+          type: boolean
+          default: false
+        notes:
+          type: string
+          nullable: true
+          example: "Deixar com o porteiro"
+
+    CreateAddressPayload:
+      type: object
+      description: Payload para criar/atualizar endereço.
+      required:
+        - first_name
+        - last_name
+        - line1
+        - line4
+        - postcode
+      properties:
+        first_name:
+          type: string
+          example: "João"
+        last_name:
+          type: string
+          example: "Silva"
+        line1:
+          type: string
+          example: "Rua das Flores"
+        line2:
+          type: string
+          example: "123"
+        line3:
+          type: string
+          example: "Apto 42"
+        line4:
+          type: string
+          example: "Centro"
+        postcode:
+          type: string
+          example: "01310-100"
+        phone_number:
+          type: string
+          example: "(11) 99999-8888"
+        title:
+          type: string
+          example: "Casa"
+        is_default_for_shipping:
+          type: boolean
+          default: false
+        is_default_for_billing:
+          type: boolean
+          default: false
+
+    # ── PAÍS ────────────────────────────────────────────────────────────
+    Country:
+      type: object
+      description: País para seleção em endereços.
+      properties:
+        iso_3166_1_a2:
+          type: string
+          description: Código ISO alpha-2
+          example: "BR"
+        printable_name:
+          type: string
+          description: Nome legível
+          example: "Brasil"
+
+    # ── PREÇO ───────────────────────────────────────────────────────────
+    Price:
+      type: object
+      description: Preço do produto nos formatos com e sem imposto.
+      required:
+        - currency
+        - excl_tax
+        - incl_tax
+      properties:
+        currency:
+          type: string
+          description: Código ISO da moeda
+          example: "BRL"
+          minLength: 3
+          maxLength: 3
+        excl_tax:
+          type: string
+          description: Preço sem imposto (string decimal)
+          example: "1000.00"
+        incl_tax:
+          type: string
+          description: Preço com imposto (string decimal)
+          example: "1190.00"
+
+    # ── CATEGORIA (plana) ───────────────────────────────────────────────
+    Category:
+      type: object
+      description: Categoria associada ao produto.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: ID numérico da categoria
+          example: 5
+        name:
+          type: string
+          description: Nome da categoria
+          example: "Smartphones"
+        parent_id:
+          type: integer
+          nullable: true
+          description: ID da categoria pai (null se raiz)
+          example: 1
+
+    # ── CATEGORIA (árvore) ──────────────────────────────────────────────
+    CategoryTree:
+      type: object
+      description: Categoria na hierarquia completa (para o filtro lateral).
+      required:
+        - id
+        - name
+        - slug
+        - count
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Eletrônicos"
+        slug:
+          type: string
+          example: "eletronicos"
+        description:
+          type: string
+          example: "Produtos eletrônicos em geral"
+        image:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://cdn.buriti.com/media/categories/eletronicos.jpg"
+        count:
+          type: integer
+          description: Quantidade de produtos nesta categoria
+          example: 128
+        children:
+          type: array
+          description: Subcategorias
+          items:
+            $ref: "#/components/schemas/CategoryTree"
+
+    # ── PRODUTO — LISTAGEM ─────────────────────────────────────────────
+    ProductListItem:
+      type: object
+      description: |
+        Versão resumida do produto para cards na listagem.
+        Contém apenas os campos essenciais para renderização rápida.
+      required:
+        - id
+        - name
+        - price
+        - image
+        - stock
+        - category
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          nullable: true
+          description: Nome comercial / vitrine (pode conter formatação)
+          example: "Smartphone Galaxy S25 Ultra"
+        name:
+          type: string
+          description: Nome técnico do produto
+          example: "Smartphone Samsung Galaxy S25 Ultra 512GB"
+        slug:
+          type: string
+          description: Slug para URL amigável
+          example: "smartphone-samsung-galaxy-s25-ultra-512gb"
+        description:
+          type: string
+          nullable: true
+          description: Descrição curta (exibida no card em modo lista)
+          example: "O smartphone mais avançado da Samsung com câmera de 200MP."
+        upc:
+          type: string
+          nullable: true
+          description: Código de barras / GTIN
+          example: "7892514091237"
+        url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL absoluta do produto na API
+          example: "http://0.0.0.0:8000/api/products/1/"
+        price:
+          $ref: "#/components/schemas/Price"
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: URL da imagem principal (thumbnail)
+          example: "https://cdn.buriti.com/media/products/1/thumb.jpg"
+        discounted_price:
+          type: string
+          nullable: true
+          description: Preço com desconto (string decimal)
+          example: "999.00"
+        discount_percentage:
+          type: integer
+          nullable: true
+          description: Percentual de desconto
+          example: 16
+        stock:
+          type: integer
+          description: Quantidade em estoque
+          example: 50
+          minimum: 0
+        rating:
+          type: number
+          nullable: true
+          description: Avaliação média (0-5)
+          example: 4.7
+          minimum: 0
+          maximum: 5
+        reviews_count:
+          type: integer
+          nullable: true
+          description: Número total de avaliações
+          example: 234
+        category:
+          $ref: "#/components/schemas/Category"
+        is_new:
+          type: boolean
+          description: Flag indicando lançamento (últimos 30 dias)
+          example: true
+        is_on_sale:
+          type: boolean
+          description: Flag indicando produto em promoção
+          example: true
+        installments:
+          type: integer
+          nullable: true
+          description: Máximo de parcelas sem juros
+          example: 12
+        brand:
+          type: string
+          nullable: true
+          description: Marca / fabricante
+          example: "Samsung"
+
+    # ── PRODUTO — DETALHE ─────────────────────────────────────────────
+    ProductDetail:
+      type: object
+      description: |
+        Versão completa do produto para a página de detalhes.
+        Inclui galeria de imagens e atributos dinâmicos.
+      allOf:
+        - $ref: "#/components/schemas/ProductListItem"
+        - type: object
+          required:
+            - images
+          properties:
+            images:
+              type: array
+              description: |
+                Galeria completa de imagens do produto.
+                A primeira imagem deve ser a principal (mesma URL de `image`).
+              items:
+                type: string
+                format: uri
+              example:
+                - "https://cdn.buriti.com/media/products/1/01.jpg"
+                - "https://cdn.buriti.com/media/products/1/02.jpg"
+                - "https://cdn.buriti.com/media/products/1/03.jpg"
+            attributes:
+              type: object
+              nullable: true
+              description: |
+                Atributos dinâmicos do produto (cor, tamanho, capacidade…).
+                Varia conforme o product_class.
+              additionalProperties: true
+              example:
+                cor: "Preto"
+                armazenamento: "512GB"
+                tela: '6.9" Dynamic AMOLED 2X'
+                processador: "Snapdragon 8 Gen 3"
+
+    # ── PAGINAÇÃO ──────────────────────────────────────────────────────
+    Pagination:
+      type: object
+      description: Metadados de paginação (padrão Oscar).
+      required:
+        - count
+        - next
+        - previous
+      properties:
+        count:
+          type: integer
+          description: Total de itens (não apenas da página atual)
+          example: 1247
+        next:
+          type: string
+          format: uri
+          nullable: true
+          description: URL da próxima página (null se última)
+          example: "http://0.0.0.0:8000/api/products/?page=3&page_size=20"
+        previous:
+          type: string
+          format: uri
+          nullable: true
+          description: URL da página anterior (null se primeira)
+          example: "http://0.0.0.0:8000/api/products/?page=1&page_size=20"
+
+    PaginatedProducts:
+      type: object
+      description: Resposta paginada de produtos.
+      allOf:
+        - $ref: "#/components/schemas/Pagination"
+        - type: object
+          required:
+            - results
+          properties:
+            results:
+              type: array
+              description: Lista de produtos da página atual
+              items:
+                $ref: "#/components/schemas/ProductListItem"
+
+    PaginatedOrders:
+      type: object
+      description: Resposta paginada de pedidos.
+      allOf:
+        - $ref: "#/components/schemas/Pagination"
+        - type: object
+          required:
+            - results
+          properties:
+            results:
+              type: array
+              description: Lista de pedidos da página atual
+              items:
+                $ref: "#/components/schemas/Order"
+
+    # ── CARRINHO ────────────────────────────────────────────────────────
+    CartLine:
+      type: object
+      description: Linha (item) do carrinho.
+      required:
+        - id
+        - product
+        - quantity
+      properties:
+        id:
+          type: integer
+          example: 1
+        product:
+          $ref: "#/components/schemas/ProductListItem"
+        quantity:
+          type: integer
+          example: 2
+        price_incl_tax:
+          type: string
+          nullable: true
+          description: Preço total da linha com imposto
+          example: "2380.00"
+        price_excl_tax:
+          type: string
+          nullable: true
+          description: Preço total da linha sem imposto
+          example: "2000.00"
+
+    Cart:
+      type: object
+      description: Carrinho de compras (basket).
+      required:
+        - id
+        - lines
+      properties:
+        id:
+          type: integer
+          example: 1
+        owner:
+          type: integer
+          nullable: true
+          description: ID do usuário dono (null se anônimo)
+          example: 1
+        total_incl_tax:
+          type: string
+          nullable: true
+          description: Total do carrinho com imposto
+          example: "4760.00"
+        total_excl_tax:
+          type: string
+          nullable: true
+          description: Total do carrinho sem imposto
+          example: "4000.00"
+        lines:
+          type: array
+          description: Itens do carrinho
+          items:
+            $ref: "#/components/schemas/CartLine"
+
+    # ── CHECKOUT ────────────────────────────────────────────────────────
+    CheckoutPayload:
+      type: object
+      description: Dados para finalizar a compra.
+      properties:
+        shipping_address:
+          type: object
+          description: Endereço de entrega (pode ser ID de endereço salvo ou objeto inline)
+          example:
+            first_name: "João"
+            last_name: "Silva"
+            line1: "Rua das Flores"
+            line2: "123"
+            line4: "Centro"
+            postcode: "01310-100"
+        billing_address:
+          type: object
+          description: Endereço de cobrança
+        shipping_method_code:
+          type: string
+          description: Código do método de entrega selecionado
+          example: "pac"
+        payment_method_code:
+          type: string
+          description: Código do método de pagamento
+          example: "credit_card"
+        guest_email:
+          type: string
+          format: email
+          nullable: true
+          description: Email do comprador (para checkout sem login)
+
+    # ── MÉTODO DE ENVIO ─────────────────────────────────────────────────
+    ShippingMethod:
+      type: object
+      description: Opção de frete disponível.
+      properties:
+        code:
+          type: string
+          description: Código do método
+          example: "pac"
+        name:
+          type: string
+          description: Nome legível
+          example: "PAC"
+        price_incl_tax:
+          type: string
+          nullable: true
+          description: Valor do frete com imposto
+          example: "25.90"
+
+    # ── PEDIDO ──────────────────────────────────────────────────────────
+    OrderLine:
+      type: object
+      description: Item de um pedido.
+      required:
+        - id
+        - product
+        - quantity
+      properties:
+        id:
+          type: integer
+          example: 1
+        product:
+          $ref: "#/components/schemas/ProductListItem"
+        quantity:
+          type: integer
+          example: 1
+        line_price_incl_tax:
+          type: string
+          nullable: true
+          description: Preço total da linha no pedido
+          example: "1190.00"
+
+    Order:
+      type: object
+      description: Pedido confirmado.
+      required:
+        - id
+        - status
+      properties:
+        id:
+          type: integer
+          example: 1
+        number:
+          type: string
+          nullable: true
+          description: Número do pedido (legível para o cliente)
+          example: "OSCAR-2025-000001"
+        status:
+          type: string
+          description: Status atual do pedido
+          example: "Processing"
+        date_placed:
+          type: string
+          format: date-time
+          nullable: true
+          description: Data de realização
+          example: "2025-06-15T14:30:00Z"
+        total_incl_tax:
+          type: string
+          nullable: true
+          description: Total do pedido com imposto
+          example: "1190.00"
+        lines:
+          type: array
+          nullable: true
+          description: Itens do pedido
+          items:
+            $ref: "#/components/schemas/OrderLine"
+
+  # ── SEGURANÇA ─────────────────────────────────────────────────────────
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtido via `/api/token/` ou `/api/token/refresh/`.
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+      description: Cookie de sessão django-oscar (alternativa ao JWT).
+
+security:
+  - bearerAuth: []
+  - sessionAuth: []
